@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+google-generativeai
+pandas
+gspread
+oauth2client
+geopy
+python-dotenv
+
