@@ -57,7 +57,7 @@ async def get_ai_response(user_message: str, stores_info: list[dict] | None, sea
         prompt += f"User Query: {user_message}.\n\nChỉ dẫn:\nNgười dùng muốn tìm '{product_name}' nhưng hiện tại không tìm thấy cửa hàng nào phù hợp trong hệ thống. Hãy xin lỗi khách hàng một cách khéo léo và hỏi họ muốn tìm sản phẩm khác không."
     else:
         # No intent found -> Social chat
-        prompt += f"User Query: {user_message}.\n\nChỉ dẫn:\nĐây là hội thoại xã giao.\n1. Tự xưng là 'Trợ lý ảo' (KHÔNG dùng '[Tên cửa hàng]' hay '[Tên thương hiệu]').\n2. Nếu chào hỏi: 'Chào bạn! Mình là Trợ lý ảo giúp bạn tìm kiếm cửa hàng gần nhất.'\n3. Nếu cảm ơn: 'Dạ không có chi ạ!'\n4. TUYỆT ĐỐI KHÔNG dùng các từ trong ngoặc vuông như '[...]' trong câu trả lời."
+        prompt += f"User Query: {user_message}.\n\nChỉ dẫn:\nĐây là hội thoại xã giao hoặc câu hỏi chưa rõ ý định.\n1. Tự xưng là 'Trợ lý ảo'.\n2. Nếu người dùng nói muốn mua đồ chung chung, hãy hỏi thẳng: 'Bạn đang tìm kiếm sản phẩm nào cụ thể ạ? (Ví dụ: Điện thoại, Quần áo, Laptop...)' (KHÔNG cần chào 'Chào bạn' ở đầu).\n3. CHỈ chào hỏi ('Chào bạn!...') NẾU người dùng có lời chào trước (như 'hi', 'xin chào').\n4. TUYỆT ĐỐI KHÔNG dùng các từ trong ngoặc vuông như '[...]'."
 
     try:
         print(f"DEBUG: Sending prompt to Gemini:\n{prompt}")
@@ -95,6 +95,14 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
     if any(k in user_msg_lower for k in location_keywords) and any(p in user_msg_lower for p in ["tôi", "mình", "user", "hiện tại", "của tớ"]):
         print("DEBUG: Detected Location Request via Regex (Keyword Combination)")
         return {"product": None, "generic_term": None, "category": None, "is_location_request": True}
+
+    # Check 3: Generic "buy stuff" queries that confuse the AI (Hardcoded Override)
+    # Các từ khóa chung chung không rõ ý định
+    generic_keywords = ["mua đồ", "sắm đồ", "mua sắm", "shopping", "mua gì đó"]
+    # Nếu câu chứa từ khóa chung chung VÀ ngắn (dưới 6 từ) -> Return None để Bot hỏi lại
+    if any(k in user_msg_lower for k in generic_keywords) and len(user_msg_lower.split()) <= 6:
+        print("DEBUG: Detected Generic Query (Hardcoded Python Check) -> Force Return None")
+        return None
     # -------------------------------------
     #old rule:1. Nếu người dùng hỏi về vị trí của họ (ví dụ: "vị trí của tôi", "tôi đang ở đâu", "tìm vị trí user"), set "is_location_request": true. Các trường khác null.
     system_instruction = f"""Bạn là công cụ trích xuất ý định.
@@ -109,13 +117,15 @@ Rules:
    - "generic_term": Từ khóa chung nhất (iPhone, Laptop, Giày).
      * ĐẶC BIỆT: "máy tính" -> generic_term: "Laptop".
      * "điện thoại" -> generic_term: "Điện thoại".
-     * "áo", "quần", "đồ" -> generic_term: "Quần áo".
+     * "áo", "quần" -> generic_term: "Quần áo".
    - "category": Chọn từ danh sách {valid_categories}. Ưu tiên "Thời trang" nếu tìm áo/quần.
+
+3. TRƯỜNG HỢP NGOẠI LỆ (QUAN TRỌNG):
+   - Nếu người dùng nói chung chung như "mua đồ", "đi shopping", "muốn mua gì đó" mà KHÔNG có tên sản phẩm cụ thể -> Return tất cả là null.
 
 Ví dụ:
 - "Mua iPhone 16" -> {{"product": "iPhone 16", "generic_term": "iPhone", "category": "Công nghệ", "is_location_request": false}}
-- "Mua máy tính" -> {{"product": "máy tính", "generic_term": "Laptop", "category": "Công nghệ", "is_location_request": false}}
-- "Tao muốn mua áo" -> {{"product": "áo", "generic_term": "Quần áo", "category": "Thời trang", "is_location_request": false}}
+- "Tôi muốn mua đồ" -> {{"product": null, "generic_term": null, "category": null, "is_location_request": false}}
 - "Vị trí của tôi ở đâu" -> {{"product": null, "generic_term": null, "category": null, "is_location_request": true}}
 """
     
