@@ -6,4 +6,5 @@ gspread
 oauth2client
 geopy
 python-dotenv
+requests
 

@@ -4,18 +4,18 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 
-from models import ChatRequest, ChatResponse, StoreInfo
-from services.sheet_service import load_stores_data
-from services.geo_service import find_nearest_stores
-from services.ai_service import get_ai_response, extract_search_intent, configure_genai
-
-# Force load .env from the project root
+# Force load .env from the project root BEFORE importing services
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, "..")
 env_path = os.path.join(project_root, ".env")
 
 print(f"Loading .env from: {env_path}")
 load_dotenv(env_path, override=True)
+
+from models import ChatRequest, ChatResponse, StoreInfo
+from services.sheet_service import load_stores_data
+from services.geo_service import find_nearest_stores
+from services.ai_service import get_ai_response, extract_search_intent, configure_genai
 
 from fastapi.staticfiles import StaticFiles
 
