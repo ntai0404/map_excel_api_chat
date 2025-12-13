@@ -1,5 +1,71 @@
 from geopy.distance import geodesic
+from geopy.geocoders import Nominatim
 import pandas as pd
+import json
+import os
+import time
+
+# Cache file path
+CACHE_FILE = 'geocoding_cache.json'
+
+def load_cache():
+    """Load geocoding cache from disk"""
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_cache(cache):
+    """Save geocoding cache to disk"""
+    try:
+        with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error saving cache: {e}")
+
+def build_address(ward, district, city):
+    """Build full address string from components"""
+    components = []
+    if pd.notna(ward) and str(ward).strip():
+        components.append(str(ward).strip())
+    if pd.notna(district) and str(district).strip():
+        components.append(str(district).strip())
+    if pd.notna(city) and str(city).strip():
+        components.append(str(city).strip())
+    
+    return ", ".join(components)
+
+def geocode_address(address, cache=None):
+    """Geocode address to (lat, lng)"""
+    if not address or not isinstance(address, str):
+        return None
+        
+    if cache is None:
+        cache = load_cache()
+        
+    if address in cache:
+        return cache[address]
+        
+    try:
+        geolocator = Nominatim(user_agent="map_excel_api_chat_v3")
+        location = geolocator.geocode(address + ", Vietnam", timeout=10)
+        
+        if location:
+            result = (location.latitude, location.longitude)
+            # Update cache
+            cache[address] = result
+            save_cache(cache)
+            time.sleep(1) # Rate limiting
+            return result
+        else:
+            print(f"Could not geocode: {address}")
+            return None
+    except Exception as e:
+        print(f"Geocoding error for {address}: {e}")
+        return None
 
 def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFrame, limit: int = 3):
     user_location = (user_lat, user_long)
@@ -7,7 +73,10 @@ def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFra
 
     for index, store in stores_df.iterrows():
         store_location = (store['latitude'], store['longitude'])
-        distance = geodesic(user_location, store_location).km
+        try:
+            distance = geodesic(user_location, store_location).km
+        except ValueError:
+            continue # Skip invalid coords
 
         stores_with_distance.append({
             "store_id": store['store_id'],
@@ -19,6 +88,7 @@ def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFra
             "latitude": store['latitude'],
             "longitude": store['longitude'],
             "zalo_group_link": store.get('zalo_group_link', ''),
+            "products": store.get('products', []), # Include products
             "distance_km": distance
         })
     
@@ -29,20 +99,4 @@ def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFra
     return stores_with_distance[:limit]
 
 if __name__ == '__main__':
-    # Example usage (for testing purposes)
-    # Create a dummy DataFrame for testing
-    data = [
-        {"store_id": "1", "store_name": "Shop A", "address": "123 Le Loi, HCMC", "category": "Shoes", "product_info": "Running shoes size 40-45", "promotion": "10% off running shoes", "latitude": 10.77, "longitude": 106.69},
-        {"store_id": "2", "store_name": "Shop B", "address": "456 Nguyen Hue, HCMC", "category": "Electronics", "product_info": "Latest iPhones and Androids", "promotion": "Free screen protector with any phone", "latitude": 10.765, "longitude": 106.685},
-        {"store_id": "3", "store_name": "Shop C", "address": "789 Tran Hung Dao, HCMC", "category": "Apparel", "product_info": "T-shirts, jeans, dresses", "promotion": "Buy 2 get 1 free on t-shirts", "latitude": 10.768, "longitude": 106.675}
-    ]
-    stores_df_test = pd.DataFrame(data)
-
-    user_lat_test = 10.762622  # User's current latitude
-    user_long_test = 106.660172 # User's current longitude
-
-    nearest = find_nearest_store(user_lat_test, user_long_test, stores_df_test)
-    if nearest:
-        print(f"Nearest store: {nearest['store_name']} at {nearest['address']} ({nearest['distance_km']:.2f} km away)")
-    else:
-        print("No stores found.")
+    pass

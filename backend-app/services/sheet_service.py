@@ -2,9 +2,8 @@ import pandas as pd
 import os
 import sys
 
-# Add parent directory to path to import geocoding module
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from geocoding import geocode_address, build_address, load_cache
+# Import from geo_service
+from services.geo_service import geocode_address, build_address, load_cache
 
 # Google Sheets Configuration
 SPREADSHEET_ID = "1ekdjU2lJK1MnBzwFr3B8ws2E8GnK1omLJNbIU8puXPI"
