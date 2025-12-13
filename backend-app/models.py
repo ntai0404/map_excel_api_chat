@@ -5,12 +5,20 @@ class ChatRequest(BaseModel):
     latitude: float
     longitude: float
 
+class ProductInfo(BaseModel):
+    name: str
+    price: str
+    image_url: str = ""
+    link: str = ""
+
 class StoreInfo(BaseModel):
     name: str
     address: str
     lat: float
     lng: float
     distance_km: float
+    zalo_group_link: str | None = None
+    products: list[ProductInfo] = []
 
 class ChatResponse(BaseModel):
     reply: str

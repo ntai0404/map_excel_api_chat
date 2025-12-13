@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - AI Shop Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .login-container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .zalo-login-btn {
+            background: linear-gradient(135deg, #0068FF 0%, #0180FF 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(1, 128, 255, 0.3);
+        }
+
+        .zalo-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(1, 128, 255, 0.4);
+        }
+
+        .zalo-login-btn:active {
+            transform: translateY(0);
+        }
+
+        .zalo-icon {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0068FF;
+            font-weight: bold;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .divider::before {
+            margin-right: 10px;
+        }
+
+        .divider::after {
+            margin-left: 10px;
+        }
+
+        .guest-btn {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .guest-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-shopping-bag"></i>
+        </div>
+        <h1>AI Shop Assistant</h1>
+        <p class="subtitle">Tìm kiếm cửa hàng gần bạn với AI</p>
+
+        <button class="zalo-login-btn" id="zaloLoginBtn">
+            <span class="zalo-icon">Z</span>
+            <span>Đăng nhập với Zalo</span>
+        </button>
+
+        <div class="divider">Hoặc</div>
+
+        <button class="guest-btn" id="guestBtn">
+            <i class="fas fa-user"></i> Tiếp tục với tư cách khách
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Đang xử lý...</p>
+        </div>
+
+        <div class="footer">
+            Bằng cách đăng nhập, bạn đồng ý với<br>
+            <a href="#" style="color: #667eea; text-decoration: none;">Điều khoản dịch vụ</a> của chúng tôi
+        </div>
+    </div>
+
+    <script>
+        const ZALO_APP_ID = '1479536407879002042'; // User's App ID
+        const REDIRECT_URI = 'http://127.0.0.1:8000/zalo_callback.html';
+        const STATE = Math.random().toString(36).substring(7);
+
+        // Generate code_verifier (43 characters, alphanumeric) for PKCE
+        function generateCodeVerifier() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 43; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Generate code_challenge from code_verifier using SHA-256
+        async function generateCodeChallenge(verifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(verifier);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+
+            // Convert hash to base64url (without padding)
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(hash)));
+            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        document.getElementById('zaloLoginBtn').addEventListener('click', async function () {
+            // Clear existing session data to prevent 'Guest' mode sticking
+            localStorage.removeItem('user_type');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_picture');
+            localStorage.removeItem('session_id');
+
+            // Generate code_verifier and code_challenge for PKCE
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+            // Save to localStorage for later use in callback
+            localStorage.setItem('zalo_oauth_state', STATE);
+            localStorage.setItem('zalo_code_verifier', codeVerifier);
+
+            // Build Zalo OAuth V4 URL with code_challenge
+            const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${ZALO_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge=${codeChallenge}&state=${STATE}`;
+
+            document.getElementById('loading').classList.add('active');
+
+            // Redirect to Zalo OAuth
+            window.location.href = zaloAuthUrl;
+        });
+
+        document.getElementById('guestBtn').addEventListener('click', function () {
+            // Lưu session guest
+            localStorage.setItem('user_type', 'guest');
+            localStorage.setItem('login_time', new Date().toISOString());
+
+            // Chuyển đến trang chính
+            window.location.href = 'index.html';
+        });
+
+        // Kiểm tra nếu đã đăng nhập
+        window.addEventListener('DOMContentLoaded', function () {
+            const userType = localStorage.getItem('user_type');
+            const loginTime = localStorage.getItem('login_time');
+
+            if (userType && userType !== 'guest' && loginTime) {
+                // Kiểm tra session còn hạn không (24 giờ)
+                const loginDate = new Date(loginTime);
+                const now = new Date();
+                const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
+
+                if (hoursDiff < 24) {
+                    // Session còn hạn, redirect về index
+                    window.location.href = 'index.html';
+                } else {
+                    // Session hết hạn, xóa
+                    localStorage.clear();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

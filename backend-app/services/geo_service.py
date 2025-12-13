@@ -18,6 +18,7 @@ def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFra
             "promotion": store['promotion'],
             "latitude": store['latitude'],
             "longitude": store['longitude'],
+            "zalo_group_link": store.get('zalo_group_link', ''),
             "distance_km": distance
         })
     

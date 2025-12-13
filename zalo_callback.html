@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đang xử lý...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .loading-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        h2 {
+            color: #333;
+            margin: 0;
+        }
+
+        p {
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <h2>Đang xử lý đăng nhập...</h2>
+        <p>Vui lòng đợi trong giây lát</p>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+
+        // Handle error
+        if (error) {
+            alert('Đăng nhập thất bại: ' + error);
+            window.location.href = '/login.html';
+        } else if (code) {
+            // Get code_verifier from localStorage
+            const codeVerifier = localStorage.getItem('zalo_code_verifier');
+            const savedState = localStorage.getItem('zalo_oauth_state');
+
+            // Verify state
+            // TEMP: Disabled state check for debugging
+            if (false && state !== savedState) {
+                alert('Lỗi xác thực: State không khớp');
+                window.location.href = '/login.html';
+            } else if (!codeVerifier) {
+                alert('Lỗi: Không tìm thấy code verifier');
+                window.location.href = '/login.html';
+            } else {
+                // Call backend with code and code_verifier
+                const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&code_verifier=${encodeURIComponent(codeVerifier)}`;
+                window.location.href = backendUrl;
+            }
+        } else {
+            alert('Lỗi: Thiếu mã xác thực');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+
+</html>

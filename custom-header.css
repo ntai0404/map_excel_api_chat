@@ -1,0 +1,41 @@
+/* Chat Header Gradient */
+.bg-light.border-bottom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.bg-light.border-bottom h5 {
+    color: white !important;
+}
+
+.bg-light.border-bottom small {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix header layout - user info on the right */
+.bg-light.border-bottom .d-flex.justify-content-between {
+    flex-direction: row !important;
+}
+
+/* Logout Button Styling */
+/* Logout and Login Button Styling */
+#logout-btn,
+#login-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#logout-btn:hover,
+#login-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}

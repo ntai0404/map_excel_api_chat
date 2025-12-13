@@ -30,6 +30,60 @@ style.innerHTML = `
         color: #555;
         font-size: 0.85em;
     }
+    .store-address {
+        color: #555;
+        font-size: 0.85em;
+    }
+    .zalo-btn {
+        display: inline-block;
+        margin-top: 5px;
+        padding: 5px 10px;
+        background-color: #0068ff;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+    .zalo-btn:hover {
+        background-color: #0054cc;
+        color: white;
+    }
+    .product-list {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        margin-top: 10px;
+        padding-bottom: 5px;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+    .product-item {
+        min-width: 120px;
+        max-width: 120px;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        overflow: hidden;
+        font-size: 0.8em;
+    }
+    .product-img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+    }
+    .product-info {
+        padding: 5px;
+    }
+    .product-name {
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #333;
+    }
+    .product-price {
+        color: #d9534f;
+        font-weight: bold;
+    }
 `;
 document.head.appendChild(style);
 
@@ -45,9 +99,6 @@ function initializeMap() {
 }
 
 function updateMap(userLat, userLng, stores) {
-    // Clear existing store markers
-    storeMarkers.clearLayers();
-
     if (userMarker) {
         map.removeLayer(userMarker);
     }
@@ -58,13 +109,26 @@ function updateMap(userLat, userLng, stores) {
         map.setView([userLat, userLng], 13);
     }
 
+    // Only update stores if a new list is provided (not null)
+    if (stores !== null) {
+        storeMarkers.clearLayers();
+        if (stores.length > 0) {
+            stores.forEach(store => {
+                const zaloLink = store.zalo_group_link ?
+                    `<br><a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" style="margin-top: 8px;">💬 Tham gia nhóm Zalo</a>` : '';
+
+                L.marker([store.lat, store.lng])
+                    .addTo(storeMarkers)
+                    .bindPopup(`<b>${store.name}</b><br>${store.description || ''}${zaloLink}`).openPopup();
+            });
+        }
+    }
+
+    // Fit bounds logic: Use new stores if provided, otherwise simply maintain view or fit to user + existing
+    // Note: If we just updated location, we might want to keep existing markers in view if possible, 
+    // but the original logic was to fit bounds if stores were provided.
+
     if (stores && stores.length > 0) {
-        stores.forEach(store => {
-            L.marker([store.lat, store.lng])
-                .addTo(storeMarkers)
-                .bindPopup(`<b>${store.name}</b><br>${store.description || ''}`).openPopup();
-        });
-        // Fit map to markers if both user and store locations are available
         if (userLat && userLng) {
             const bounds = new L.LatLngBounds();
             bounds.extend([userLat, userLng]);
@@ -86,7 +150,8 @@ function getUserLocation() {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    updateMap(currentUserLocation.lat, currentUserLocation.lng, []);
+                    // Pass null for stores to preserve existing markers
+                    updateMap(currentUserLocation.lat, currentUserLocation.lng, null);
                     resolve(currentUserLocation);
                 },
                 (error) => {
@@ -146,7 +211,9 @@ async function fetchAIResponse(userMessage, userLocation) {
                     name: store.name,
                     lat: store.lat,
                     lng: store.lng,
-                    description: store.address
+                    description: store.address,
+                    zalo_group_link: store.zalo_group_link,
+                    products: store.products || []
                 });
             });
         }
@@ -226,6 +293,24 @@ async function sendMessage() {
                 <div class="store-name">${store.name}</div>
                 <div class="store-address">${store.description}</div>
                 <div class="store-distance">📍 Cách bạn khoảng cách gần</div>
+                
+                ${store.products && store.products.length > 0 ? `
+                    <div class="product-list">
+                        ${store.products.map(p => `
+                            <div class="product-item">
+                                <img src="${p.image_url || 'https://via.placeholder.com/120'}" class="product-img" onerror="this.src='https://via.placeholder.com/120?text=No+Image'">
+                                <div class="product-info">
+                                    <div class="product-name" title="${p.name}">${p.name}</div>
+                                    <div class="product-price">${p.price}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                ${store.zalo_group_link ?
+                    `<a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" onclick="event.stopPropagation()">💬 Tham gia nhóm Zalo</a>`
+                    : ''}
             `;
             storeListHtml.appendChild(card);
         });
@@ -295,3 +380,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMap();
     getUserLocation(); // Get initial user location
 });
+

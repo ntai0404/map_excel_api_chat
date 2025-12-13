@@ -158,11 +158,9 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
         print("DEBUG: Detected Location Request via Regex (Keyword Combination)")
         return {"product": None, "generic_term": None, "category": None, "is_location_request": True}
 
-    generic_keywords = ["mua đồ", "sắm đồ", "mua sắm", "shopping", "mua gì đó"]
-    if any(k in user_msg_lower for k in generic_keywords) and len(user_msg_lower.split()) <= 6:
-        print("DEBUG: Detected Generic Query (Hardcoded Check) -> Force Return None")
-        return None
-    # --------------------------
+    # HARDCODED CHECK REMOVED: Relying on AI for generic vs specific intent.
+    # generic_keywords = ["mua đồ", "sắm đồ", "mua sắm", "shopping", "mua gì đó"]
+    # ... code removed ...
 
     system_instruction = f"""Bạn là công cụ trích xuất ý định.
 Nhiệm vụ: Trích xuất 'product', 'generic_term', 'category' và 'is_location_request'.
@@ -170,14 +168,21 @@ Output format: JSON ONLY.
 Rules:
 1. ƯU TIÊN TUYỆT ĐỐI: Nếu câu hỏi có chứa từ khóa "vị trí", "ở đâu", "tọa độ", "định vị" VÀ ám chỉ người dùng (tôi, mình, user) -> set "is_location_request": true.
 2. Nếu tìm sản phẩm:
-   - "product": Tên cụ thể (iPhone 16).
+- "product": Tên cụ thể (iPhone 16).
    - "generic_term": Từ khóa chung nhất (iPhone, Laptop, Giày).
    - "category": Chọn từ danh sách {valid_categories}.
-3. TRƯỜNG HỢP NGOẠI LỆ:
-   - Mua đồ chung chung -> Return tất cả null.
+   
+3. QUAN TRỌNG: XỬ LÝ KHI KHÔNG RÕ RÀNG
+   - Nếu câu hỏi quá chung chung (VD: "tôi muốn mua đồ", "shopping", "mua sắm") -> Return tất cả null.
+   - Nếu câu hỏi có từ khóa sản phẩm nhưng chưa cụ thể (VD: "đồ chơi giáo dục", "đồ gia dụng", "đồ dùng nhà bếp"...):
+     -> "product": [Từ khóa chính] (VD: "đồ chơi", "đồ gia dụng")
+     -> "category": Tìm category gần nhất trong danh sách.
+     -> KHÔNG trả về null nếu đã xác định được nhóm hàng.
 
 Ví dụ:
+- "tôi muốn mua đồ" -> {{"product": null, "generic_term": null, "category": null, "is_location_request": false}}
 - "Mua iPhone 16" -> {{"product": "iPhone 16", "generic_term": "iPhone", "category": "Công nghệ", "is_location_request": false}}
+- "đồ chơi giáo dục" -> {{"product": "đồ chơi", "generic_term": "đồ chơi", "category": "Đồ chơi", "is_location_request": false}}
 """
     
     prompt = f"{system_instruction}\n\nUser Message: {user_message}"

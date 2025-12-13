@@ -1,82 +1,107 @@
-# 📍 AI Chatbot Tìm Kiếm Cửa Hàng Theo Vị Trí (Location-Based Store Finder)
+# 📍 AI Smart Chatbot - Location Based Store Finder
 
-Dự án Chatbot AI thông minh giúp người dùng tìm kiếm cửa hàng, sản phẩm gần nhất dựa trên vị trí thực tế, sử dụng dữ liệu từ Google Sheets và công nghệ AI (Google Gemini).
+Dự án Chatbot tích hợp AI (Google Gemini) giúp người dùng tìm kiếm sản phẩm và cửa hàng gần nhất dựa trên vị trí thực tế, hỗ trợ đăng nhập qua Zalo và quản lý dữ liệu linh hoạt từ Google Sheets.
 
 ## ✨ Tính Năng Nổi Bật
 
-*   **🤖 AI Chatbot Thông Minh:** Hiểu ngôn ngữ tự nhiên, phân tích ý định tìm kiếm (sản phẩm, danh mục, vị trí, xã giao).
-*   **📍 Định Vị Người Dùng:** Tự động xác định vị trí người dùng (HTML5 Geolocation) để tìm cửa hàng gần nhất.
-*   **🗺️ Bản Đồ Trực Quan:** Hiển thị vị trí người dùng và các cửa hàng trên bản đồ tương tác (OpenStreetMap & Leaflet).
-*   **📊 Dữ Liệu Linh Hoạt:** Quản lý danh sách cửa hàng, sản phẩm trực tiếp trên Google Sheets (không cần Database phức tạp).
-*   **🔍 Tìm Kiếm Đa Tầng:**
-    1.  Ưu tiên tìm chính xác tên sản phẩm.
-    2.  Tìm theo từ khóa chung (ví dụ: "điện thoại", "áo").
-    3.  Tìm theo danh mục (ví dụ: "Thời trang", "Công nghệ").
-*   **💬 Phản Hồi Tự Nhiên:** AI trả lời thân thiện, biết chào hỏi, cảm ơn, tạm biệt và xử lý các tình huống không tìm thấy hàng.
+### 🤖 AI & NLP (Google Gemini)
+*   **Hiểu ngôn ngữ tự nhiên:** Phân tích ý định người dùng (tìm sản phẩm cụ thể, tìm theo danh mục, hỏi vị trí, giao tiếp xã giao).
+*   **Phản hồi thông minh:** Trả lời dựa trên ngữ cảnh, tự động đề xuất cửa hàng phù hợp kể cả khi không tìm thấy sản phẩm chính xác (gợi ý thay thế).
+*   **Trích xuất thông tin:** Tự động nhận diện tên sản phẩm, danh mục từ câu chat.
+
+### 🗺️ Bản Đồ & Định Vị (Leaflet & OpenStreetMap)
+*   **Định vị người dùng:** Xác định vị trí GPS chính xác.
+*   **Trực quan hóa:** Hiển thị Marker người dùng và các cửa hàng gần nhất trên bản đồ.
+*   **Tương tác:** Popup hiển thị thông tin chi tiết, đường dẫn Zalo OA của từng cửa hàng.
+
+### 🛍️ Tìm Kiếm Sản Phẩm & Cửa Hàng
+*   **Dữ liệu Real-time:** Đọc trực tiếp từ Google Sheets (không cần database riêng).
+*   **Tìm kiếm đa tầng:**
+    1.  Tìm chính xác tên sản phẩm.
+    2.  Tìm theo danh mục (Category).
+*   **Hiển thị sản phẩm:** Xem trước hình ảnh, giá bán của sản phẩm nổi bật ngay trong khung chat và trên bản đồ.
+
+### 🔐 Tích Hợp Zalo
+*   **Đăng nhập Zalo:** Hỗ trợ người dùng đăng nhập nhanh qua tài khoản Zalo.
+*   **Liên kết Zalo OA:** Chuyển hướng người dùng đến nhóm Zalo của từng cửa hàng để tư vấn trực tiếp.
+
+---
 
 ## 🛠️ Công Nghệ Sử Dụng
 
-*   **Backend:** Python (FastAPI).
-*   **AI Engine:** Google Gemini API (`gemini-2.0-flash-exp`).
-*   **Database:** Google Sheets (CSV Export).
-*   **Frontend:** HTML, CSS, JavaScript (Vanilla).
-*   **Map:** OpenStreetMap, Leaflet.js.
-*   **Distance Calculation:** Geopy (Haversine formula).
+*   **Backend:** Python (FastAPI), Pandas (Data Processing).
+*   **AI Engine:** Google Gemini API (`gemini-2.0-flash-lite` / `gemini-2.5-flash-lite`).
+*   **Frontend:** HTML5, CSS3, JavaScript (Vanilla), Leaflet.js.
+*   **Data Source:** Google Sheets (CSV Export).
+*   **Deployment:** Hỗ trợ chạy local hoặc deploy lên server (Render, Railway...).
+
+---
 
 ## 🚀 Cài Đặt & Chạy Dự Án
 
-### 1. Yêu Cầu
-*   Python 3.8 trở lên.
-*   Tài khoản Google AI Studio (để lấy API Key).
+### 1. Chuẩn Bị
+*   Python 3.8+
+*   API Key Google Gemini (AI Studio).
+*   Zalo App ID & Secret (cho tính năng đăng nhập).
 
 ### 2. Cài Đặt
+```bash
+# 1. Clone dự án
+git clone https://github.com/ntai0404/map_excel_api_chat.git
+cd map_excel_api_chat
 
-1.  **Clone dự án:**
-    ```bash
-    git clone https://github.com/ntai0404/map_excel_api_chat.git
-    cd map_excel_api_chat
-    ```
+# 2. Cài đặt thư viện
+pip install -r backend-app/requirements.txt
+```
 
-2.  **Cài đặt thư viện:**
-    ```bash
-    pip install -r backend-app/requirements.txt
-    ```
+### 3. Cấu Hình
+Tạo file `.env` tại thư mục gốc:
+```env
+# Google AI
+AI_API_KEY=your_gemini_api_key
+AI_MODEL_NAME=gemini-2.5-flash-lite
 
-3.  **Cấu hình môi trường:**
-    *   Tạo file `.env` tại thư mục gốc.
-    *   Thêm API Key của bạn vào:
-        ```env
-        GEMINI_API_KEY=your_api_key_here
-        ```
+# Zalo OAuth
+ZALO_APP_ID=your_zalo_app_id
+ZALO_APP_SECRET=your_zalo_app_secret
+ZALO_REDIRECT_URI=http://127.0.0.1:8000/auth/zalo/callback
 
-### 3. Chạy Server
+# Security
+SESSION_SECRET_KEY=complex_secret_key
+```
+
+### 4. Chạy Server
 ```bash
 python backend-app/main.py
 ```
-*   Server sẽ chạy tại: `http://localhost:8000`
-*   Giao diện Chat: Mở file `index.html` trên trình duyệt hoặc truy cập `http://localhost:8000` (nếu đã cấu hình static files).
+*   Truy cập: `http://localhost:8000/index.html`
+
+---
 
 ## 📂 Cấu Trúc Thư Mục
-
 ```
 map_excel_api_chat/
 ├── backend-app/
-│   ├── main.py             # Server chính (FastAPI)
-│   ├── requirements.txt    # Các thư viện cần thiết
-│   └── services/
-│       ├── ai_service.py   # Xử lý logic AI (Gemini)
-│       ├── geo_service.py  # Tính toán khoảng cách
-│       └── sheet_service.py# Đọc dữ liệu từ Google Sheets
+│   ├── main.py             # Entry point (FastAPI)
+│   ├── services/
+│   │   ├── ai_service.py   # Xử lý Gemini AI
+│   │   ├── geo_service.py  # Logic khoảng cách & bản đồ
+│   │   └── sheet_service.py# Đọc dữ liệu Google Sheets
+│   └── models.py           # Pydantic Models
 ├── index.html              # Giao diện chính
-├── script.js               # Logic Frontend (Chat, Map, Location)
-├── style.css               # Giao diện (CSS)
-├── .env                    # Biến môi trường (API Key)
-└── README.md               # Tài liệu hướng dẫn
+├── login.html              # Trang đăng nhập
+├── avatar-display.js       # Quản lý hiển thị User/Guest
+├── script.js               # Logic Chat & Map chính
+└── ...
 ```
 
-## 📝 Lưu Ý
-*   Dữ liệu cửa hàng được lấy từ link Google Sheet CSV công khai (được cấu hình trong `sheet_service.py`).
-*   Để tính năng định vị hoạt động tốt nhất, hãy cho phép trình duyệt truy cập vị trí.
+---
+
+## 📝 Nhật Ký Cập Nhật (Update V3)
+*   [x] Tối ưu hóa UI Header (Avatar/Button positioning).
+*   [x] Sửa lỗi vòng lặp đăng nhập (Login Loop).
+*   [x] Cấu hình lại AI Model phù hợp với Free Tier (`gemini-2.5-flash-lite`).
+*   [x] Dọn dẹp code rác & tối ưu hiệu năng.
 
 ---
-**Tác giả:** [ntai0404](https://github.com/ntai0404)
+**Author:** [ntai0404](https://github.com/ntai0404)
