@@ -145,6 +145,10 @@ def aggregate_shops(products_df):
                     zalo_link = str(val).strip()
                 break
         
+        # Create a searchable string of product names (top 20)
+        product_names = group['Tên sản phẩm'].dropna().unique().tolist()
+        searchable_products = " | ".join(map(str, product_names[:20]))
+        
         shop = {
             'store_id': str(shop_id),
             'store_name': first_product['Tên Shop'],
@@ -159,7 +163,8 @@ def aggregate_shops(products_df):
             'category': categories[0] if categories else '',  # For compatibility
             'latitude': lat,
             'longitude': lng,
-            'product_info': f"{len(group)} sản phẩm",
+            # CRITICAL FIX: Include product names in product_info for search filtering
+            'product_info': searchable_products if searchable_products else f"{len(group)} sản phẩm",
             'promotion': ''  # Can be added later
         }
         
