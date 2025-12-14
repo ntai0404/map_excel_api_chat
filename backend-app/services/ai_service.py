@@ -18,7 +18,7 @@ def get_config():
         "AI_API_BASE": os.environ.get("AI_API_BASE")
     }
 
-def get_model():
+def get_model(model_name=None):
     """Get or initialize the Gemini model."""
     global _model
     config = get_config()
@@ -27,21 +27,22 @@ def get_model():
     if config["AI_API_BASE"]:
         return None
         
-    if _model:
-        return _model
-        
+    # Lazy init or specific model request
+    # Note: Global _model stores the *default* configured model.
+    # If a specific name is requested, we create a new instance (lightweight).
+    target_model = model_name or config["AI_MODEL_NAME"]
+
     api_key = config["AI_API_KEY"]
     if not api_key:
         print("WARNING: AI_API_KEY not found. Gemini API calls will likely fail.")
         return None
         
     try:
+        # Re-configure if key changed (or first run)
         genai.configure(api_key=api_key)
-        _model = genai.GenerativeModel(config["AI_MODEL_NAME"])
-        print(f"Configured Gemini Provider with model: {config['AI_MODEL_NAME']}")
-        return _model
+        return genai.GenerativeModel(target_model)
     except Exception as e:
-        print(f"Error configuring Gemini: {e}")
+        print(f"Error configuring Gemini ({target_model}): {e}")
         return None
 
 def configure_genai():
@@ -137,14 +138,37 @@ async def get_ai_response(user_message: str, stores_info: list[dict] | None, sea
         if config["AI_API_BASE"]:
             return call_custom_api(prompt)
         
-        # Case 2: Standard Gemini
-        model = get_model()
-        if not model:
-            return "Lỗi cấu hình: Gemini chưa được khởi tạo (thiếu API Key?)."
+        # Case 2: Standard Gemini with FALLBACK
+        # List of models to try in order of preference (Low Quota -> Higher Capacity)
+        candidate_models = [
+            config['AI_MODEL_NAME'], # Try user config first
+            "gemini-2.0-flash", 
+            "gemini-2.0-flash-lite", 
+            "gemini-1.5-flash", 
+            "gemini-1.5-pro"
+        ]
+        # Remove duplicates while preserving order
+        candidate_models = list(dict.fromkeys(candidate_models))
+
+        for m_name in candidate_models:
+            try:
+                print(f"DEBUG: Sending prompt to Gemini ({m_name})...")
+                model = get_model(m_name)
+                if not model: continue
+                
+                response = model.generate_content(prompt)
+                return response.text
+            except Exception as e:
+                error_str = str(e)
+                if "429" in error_str or "404" in error_str or "quota" in error_str.lower():
+                    print(f"WARNING: Model {m_name} failed ({error_str}). Switching to next...")
+                    continue
+                else:
+                    # Non-quota error (e.g. content policy), re-raise or return error
+                    print(f"ERROR: Model {m_name} encountered critical error: {e}")
+                    raise e
         
-        print(f"DEBUG: Sending prompt to Gemini ({config['AI_MODEL_NAME']})...")
-        response = model.generate_content(prompt)
-        return response.text
+        return "Xin lỗi, hệ thống đang quá tải. Vui lòng thử lại sau ít phút."
             
     except Exception as e:
         print(f"CRITICAL ERROR in get_ai_response: {e}")
@@ -212,7 +236,10 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
       Output: {{"product": "bàn làm việc", "generic_term": "bàn", "category": "Nội thất", "is_location_request": false}}
 
     - User: "đồ chơi người lớn" (Map sang danh mục gần nhất)
-      Output: {{"product": null, "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false}}
+      Output: {{"product": "đồ chơi người lớn", "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false}}
+
+    - User: "đồ chơi ngườil lớn" (Lỗi chính tả -> Tự sửa)
+      Output: {{"product": "đồ chơi người lớn", "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false}}
     """
     
     prompt = f"{system_instruction}\n\nUser Message: {user_message}"
@@ -224,22 +251,43 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
         if config["AI_API_BASE"]:
             content = call_custom_api(prompt, json_mode=True)
         else:
-            model = get_model()
-            if not model:
-                return None
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0,
-                    response_mime_type="application/json"
-                )
-            )
-            content = response.text.strip()
+            # Fallback loop for Intent Extraction too
+            candidate_models = [
+                config['AI_MODEL_NAME'],
+                "gemini-2.0-flash", 
+                "gemini-2.0-flash-lite", 
+                "gemini-1.5-flash"
+            ]
+            candidate_models = list(dict.fromkeys(candidate_models))
+            
+            content = None
+            for m_name in candidate_models:
+                try:
+                    model = get_model(m_name)
+                    if not model: continue
+                    
+                    response = model.generate_content(
+                        prompt,
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0,
+                            response_mime_type="application/json"
+                        )
+                    )
+                    content = response.text.strip()
+                    break # Success
+                except Exception as e:
+                     print(f"WARNING: Intent Extraction failed on {m_name}: {e}. Retrying...")
+                     continue
+            
+            if not content:
+                 print("ERROR: All models failed for intent extraction.")
+                 return None
 
         print(f"DEBUG: Intent JSON: {content}")
         data = json.loads(content)
         
-        if not data.get('product') and not data.get('category') and not data.get('is_location_request'):
+        # Logic fix: If generic_term exists, it IS a valid search intent.
+        if not data.get('product') and not data.get('category') and not data.get('is_location_request') and not data.get('generic_term'):
             return None
             
         return data
