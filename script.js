@@ -212,6 +212,7 @@ async function fetchAIResponse(userMessage, userLocation) {
                     lat: store.lat,
                     lng: store.lng,
                     description: store.address,
+                    distance_km: store.distance_km,  // Add distance
                     zalo_group_link: store.zalo_group_link,
                     products: store.products || []
                 });
@@ -293,7 +294,7 @@ async function sendMessage() {
             card.innerHTML = `
                 <div class="store-name">${store.name}</div>
                 <div class="store-address">${store.description}</div>
-                <div class="store-distance">📍 Cách bạn khoảng cách gần</div>
+                <div class="store-distance">📏 Cách bạn: ${store.distance_km ? store.distance_km.toFixed(1) : '?'} km</div>
                 
                 ${store.products && store.products.length > 0 ? `
                     <div class="product-list">
@@ -380,5 +381,13 @@ locationButton.addEventListener('click', () => handleLocationCheck(false));
 document.addEventListener('DOMContentLoaded', () => {
     initializeMap();
     getUserLocation(); // Get initial user location
+
+    // Send welcome message only once per session
+    if (!sessionStorage.getItem('welcomeShown')) {
+        setTimeout(() => {
+            appendMessage('ai', 'Xin chào! Chúc bạn một ngày tốt lành! 😊 Bạn muốn tìm mua sản phẩm gì hôm nay ạ?');
+            sessionStorage.setItem('welcomeShown', 'true');
+        }, 500);
+    }
 });
 

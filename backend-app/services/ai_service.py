@@ -200,7 +200,7 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
     system_instruction = f"""Bạn là công cụ trích xuất ý định tìm kiếm sản phẩm.
     Nhiệm vụ: Phân tích và trích xuất thông tin sang định dạng JSON.
     
-    DANH SÁCH NGÀNH HÀNG HỢP LỆ (Bắt buộc chọn 1 trong các mục này nếu liên quan, copy Y HỆT từng dấu cách):
+    DANH SÁCH NGÀNH HÀNG HỢP LỆ (chọn 1 trong các mục này làm ngành hàng cho sản phẩm, copy Y HỆT từng dấu cách):
     [
         "Balo - Túi xách - Vali", "Bàn , ghế", "Bàn chải & Tăm nước", "Bàn phím & Chuột", "Bình nước nóng",
         "Bếp từ , bếp điện", "Chăm sóc nhà cửa", "Củ cáp sạc", "Dịch vụ , phần mềm online…", "Dụng cụ cầm tay , máy khoan , cắt…",
@@ -222,38 +222,47 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
         "product": "tên sản phẩm cụ thể hoặc null",
         "generic_term": "tên loại sản phẩm chung hoặc null",
         "category": "TÊN NGÀNH HÀNG CHÍNH XÁC (copy 100% từ danh sách trên) hoặc null",
-        "is_location_request": boolean
+        "is_location_request": boolean,
+        "is_general_inquiry": boolean
     }}
 
     QUY LUẬT XỬ LÝ:
     1. ƯU TIÊN VỊ TRÍ: Nếu người dùng hỏi "vị trí", "ở đâu", "tọa độ" (ám chỉ bản thân họ) -> "is_location_request": true.
     
-    2. XÁC ĐỊNH NGÀNH HÀNG (QUAN TRỌNG NHẤT):
-       - Dựa vào từ khóa sản phẩm, hãy tìm trong Danh Sách Ngành Hàng mục nào phù hợp nhất.
-       - Ví dụ: "Mua iPhone" -> category: "Điện thoại" (hoặc "Công nghệ" tùy danh sách).
+    2. NHẬN DIỆN CÂU HỎI CHUNG: Nếu người dùng hỏi chung chung về sản phẩm/danh mục (KHÔNG chỉ định sản phẩm cụ thể):
+       - "bạn bán những gì", "shop có gì", "có sản phẩm nào", "danh mục gì", "ngành hàng nào"
+       - "xin chào", "hello", "hi", "chào bạn", "chào shop" (lời chào)
+       -> "is_general_inquiry": true, product: null, category: null
+       
+    3. XÁC ĐỊNH NGÀNH HÀNG (QUAN TRỌNG NHẤT):
+       - Dựa vào từ khóa sản phẩm, hãy tìm trong Danh Sách Ngành Hàng mục nào sát nghĩa nhất.
+       - Ví dụ: "quần áo bơi bé gái" -> category: "Mẹ và Bé"
        - Ví dụ: "Ăn phở" -> category: "Thực phẩm & Đồ ăn".
        - Nếu không tìm thấy ngành hàng phù hợp -> category: null.
        
-    3. XÁC ĐỊNH SẢN PHẨM:
-       - "product": Từ khóa chính xác người dùng nhập (VD: "bánh mì chảo", "iphone 15 pro max").
+    4. XÁC ĐỊNH SẢN PHẨM:
+       - "product": lọc tên sản phẩm từ khóa chính xác người dùng nhập (VD: "bánh mì chảo", "iphone 15 pro max").
        - "generic_term": Loại sản phẩm (VD: "bánh mì", "điện thoại").
        
-    4. TRƯỜNG HỢP KHÓ / CHUNG CHUNG:
-       - "mua đồ", "shopping" -> Return all null.
+    5. TRƯỜNG HỢP KHÓ / CHUNG CHUNG:
+       - "mua đồ", "shopping" -> "is_general_inquiry": true
        - "đồ ăn", "ăn uống" -> "category": "Thực phẩm & Đồ ăn" (Chọn từ danh sách), "product": "đồ ăn".
     
     Ví dụ mẫu:
+    - User: "xin chào"
+      Output: {{"product": null, "generic_term": null, "category": null, "is_location_request": false, "is_general_inquiry": true}}
+    
+    - User: "bạn bán những gì"
+      Output: {{"product": null, "generic_term": null, "category": null, "is_location_request": false, "is_general_inquiry": true}}
+    
     - User: "Tìm quán phở bò"
-      Output: {{"product": "phở bò", "generic_term": "phở", "category": "Thực phẩm & Đồ ăn", "is_location_request": false}}
+      Output: {{"product": "phở bò", "generic_term": "phở", "category": "Thực phẩm & Đồ ăn", "is_location_request": false, "is_general_inquiry": false}}
       
-    - User: "Mua cái bàn làm việc" (Giả sử có danh mục "Nội thất")
-      Output: {{"product": "bàn làm việc", "generic_term": "bàn", "category": "Nội thất", "is_location_request": false}}
+    - User: "Mua cái bàn làm việc"
+      Output: {{"product": "bàn làm việc", "generic_term": "bàn", "category": "Nội thất", "is_location_request": false, "is_general_inquiry": false}}
 
-    - User: "đồ chơi người lớn" (Map sang danh mục gần nhất)
-      Output: {{"product": "đồ chơi người lớn", "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false}}
-
-    - User: "đồ chơi ngườil lớn" (Lỗi chính tả -> Tự sửa)
-      Output: {{"product": "đồ chơi người lớn", "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false}}
+    - User: "đồ chơi người lớn"
+      Output: {{"product": "đồ chơi người lớn", "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false, "is_general_inquiry": false}}
     """
     
     prompt = f"{system_instruction}\n\nUser Message: {user_message}"
@@ -300,11 +309,127 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
         print(f"DEBUG: Intent JSON: {content}")
         data = json.loads(content)
         
-        # Logic fix: If generic_term exists, it IS a valid search intent.
-        if not data.get('product') and not data.get('category') and not data.get('is_location_request') and not data.get('generic_term'):
+        # Logic fix: If any meaningful field exists, it IS a valid search intent.
+        if (not data.get('product') and not data.get('category') and 
+            not data.get('is_location_request') and not data.get('generic_term') and 
+            not data.get('is_general_inquiry')):
             return None
             
         return data
     except Exception as e:
         print(f"Error extracting intent: {e}")
         return None
+
+async def smart_product_filter(user_query: str, category_products: list[dict]) -> dict:
+    """
+    AI Call #2: Smart product filtering with template generation
+    
+    Args:
+        user_query: User's search query
+        category_products: List of {"product_name": "...", "shop_name": "..."}
+    
+    Returns:
+        {
+            "found": bool,
+            "products": [{"product_name": "...", "shop_name": "..."}],
+            "ai_message_template": str
+        }
+    """
+    
+    # Prepare product list for AI
+    products_text = json.dumps(category_products, ensure_ascii=False, indent=2)
+    
+    system_instruction = f"""Bạn là công cụ tìm kiếm sản phẩm thông minh.
+
+Nhiệm vụ: Tìm sản phẩm khớp với truy vấn "{user_query}" trong danh sách sản phẩm sau.
+
+Danh sách sản phẩm:
+{products_text}
+
+Yêu cầu:
+1. Trả về JSON với format:
+   {{
+     "found": true/false,
+     "products": [{{"product_name": "...", "shop_name": "..."}}],
+     "ai_message_template": "..."
+   }}
+
+2. Template có thể dùng các placeholder sau (hệ thống sẽ tự bù giá trị):
+   - {{{{product_name}}}}: Tên sản phẩm
+   - {{{{shop_name}}}}: Tên shop
+   - {{{{distance}}}}: Khoảng cách (km)
+   - {{{{address}}}}: Địa chỉ shop
+   - {{{{price}}}}: Giá sản phẩm
+   - {{{{image_url}}}}: Link ảnh sản phẩm
+   - {{{{zalo_link}}}}: Link Zalo shop
+
+3. NẾU tìm thấy sản phẩm khớp:
+   - "found": true
+   - "products": Danh sách sản phẩm khớp (tối đa 3)
+   - "ai_message_template": Câu giới thiệu tự nhiên, thân thiện với placeholder
+
+4. NẾU KHÔNG tìm thấy:
+   - "found": false
+   - "products": []
+   - "ai_message_template": null
+
+5. TUYỆT ĐỐI chỉ dùng tên sản phẩm và shop từ danh sách, KHÔNG tự sáng tạo
+6. Template phải tự nhiên, phù hợp ngữ cảnh Việt Nam
+7. Sử dụng placeholder đúng format (ví dụ: {{{{product_name}}}})
+"""
+
+    prompt = f"User Query: {user_query}"
+    
+    try:
+        config = get_config()
+        
+        # Case 1: Custom API (e.g. Ollama)
+        if config["AI_API_BASE"]:
+            content = call_custom_api(prompt, system_instruction, json_mode=True)
+        else:
+            # Case 2: Standard Gemini with FALLBACK
+            candidate_models = [
+                config['AI_MODEL_NAME'],
+                "gemini-2.0-flash",
+                "gemini-2.0-flash-lite",
+                "gemini-1.5-flash",
+                "gemini-1.5-pro"
+            ]
+            candidate_models = list(dict.fromkeys(candidate_models))
+            
+            content = None
+            for m_name in candidate_models:
+                try:
+                    print(f"DEBUG: Calling smart_product_filter with {m_name}...")
+                    model = get_model(m_name)
+                    if not model: continue
+                    
+                    response = model.generate_content(
+                        f"{system_instruction}\n\n{prompt}",
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0.3,
+                            response_mime_type="application/json"
+                        )
+                    )
+                    content = response.text.strip()
+                    break
+                except Exception as e:
+                    print(f"WARNING: smart_product_filter failed on {m_name}: {e}. Retrying...")
+                    continue
+            
+            if not content:
+                print("ERROR: All models failed for smart_product_filter.")
+                raise Exception("All AI models failed")
+        
+        print(f"DEBUG: smart_product_filter JSON: {content}")
+        data = json.loads(content)
+        
+        # Validate response format
+        if 'found' not in data or 'products' not in data:
+            raise ValueError("Invalid response format from AI")
+        
+        return data
+        
+    except Exception as e:
+        print(f"Error in smart_product_filter: {e}")
+        raise e
