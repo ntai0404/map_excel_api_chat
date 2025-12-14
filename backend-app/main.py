@@ -105,7 +105,7 @@ async def chat_with_ai(request: ChatRequest):
                 category_term = raw_cat
                 print(f"DEBUG: No close match for '{raw_cat}' in system categories. Using raw value.")
 
-            mask = stores_dataframe['category'].str.contains(category_term, case=False, na=False, regex=False)
+            mask = stores_dataframe['categories'].str.contains(category_term, case=False, na=False, regex=False)
             filtered_stores = stores_dataframe[mask]
             
             print(f"DEBUG: Filtered down to {len(filtered_stores)} stores in CATEGORY '{category_term}'")
@@ -219,6 +219,25 @@ async def chat_with_ai(request: ChatRequest):
                     matched_df = store_products_df[mask]
                     if not matched_df.empty:
                         store_products_df = matched_df
+
+                # STRICT PRODUCT DISPLAY RULE:
+                # If we are matching by Category (fallback) or generic term, we MUST restrict displayed products
+                # to those in that specific Category. This prevents showing "Backpacks" for a "Toys" search
+                # just because the shop sells both.
+                elif match_type == 'category' and search_intent.get('category'):
+                     target_cat = search_intent.get('category')
+                     # Fuzzy match category column in products to the target category
+                     # The column in products_df is 'Danh mục' (set in sheet_service.py)
+                     if 'Danh mục' in store_products_df.columns:
+                         # We use simple string containment or exact match.
+                         # Given we used strict list, exact match or close match is expected.
+                         # Using str.contains to be safe with minor variations/spacing.
+                         cat_mask = store_products_df['Danh mục'].str.contains(target_cat, case=False, na=False)
+                         cat_filtered = store_products_df[cat_mask]
+                         
+                         if not cat_filtered.empty:
+                             store_products_df = cat_filtered
+                         # If empty (unexpected), we might have a name mismatch, keeping original is safer/fallback.
 
                 # Take top 5
                 for _, row in store_products_df.head(5).iterrows():
