@@ -44,7 +44,7 @@ unique_categories: list[str] = []
 # Zalo OAuth Configuration
 ZALO_APP_ID = os.environ.get("ZALO_APP_ID", "")
 ZALO_APP_SECRET = os.environ.get("ZALO_APP_SECRET", "")
-ZALO_REDIRECT_URI = "http://127.0.0.1:8000/auth/zalo/callback"
+ZALO_REDIRECT_URI = os.environ.get("ZALO_REDIRECT_URI", "http://127.0.0.1:8000/auth/zalo/callback")
 # Google Sheets Configuration
 SHEET_URL = os.getenv("GOOGLE_SHEET_URL", "https://docs.google.com/spreadsheets/d/1ekdjU2lJK1MnBzwFr3B8ws2E8GnK1omLJNbIU8puXPI/edit?gid=815593620#gid=815593620")
 SPREADSHEET_ID = "1ekdjU2lJK1MnBzwFr3B8ws2E8GnK1omLJNbIU8puXPI"
