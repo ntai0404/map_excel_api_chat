@@ -58,12 +58,13 @@ sessions = {}
 async def startup_event():
     global stores_dataframe, unique_categories, products_dataframe
     print("Loading store data on startup...")
-    stores_dataframe, products_dataframe = load_stores_data()
+    # Unpack 3 values: stores, products, and raw categories
+    stores_dataframe, products_dataframe, unique_categories = load_stores_data()
     
-    if not stores_dataframe.empty and 'category' in stores_dataframe.columns:
-        unique_categories = stores_dataframe['category'].dropna().unique().tolist()
+    if not stores_dataframe.empty:
+        # unique_categories is now list(SHEET_GIDS.values()) directly
         print(f"Loaded {len(stores_dataframe)} stores.")
-        print(f"Unique Categories found: {unique_categories}")
+        print(f"Unique Categories found (Direct from Sheets): {unique_categories}")
     else:
         print("Warning: No categories found in data.")
 

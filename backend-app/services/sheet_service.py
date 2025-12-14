@@ -195,7 +195,7 @@ def load_stores_data():
     print(f"✅ DATA LOADED SUCCESSFULLY: {len(shops_df)} shops")
     print("=" * 80)
     
-    return shops_df, products_df
+    return shops_df, products_df, list(SHEET_GIDS.values())
 
 if __name__ == '__main__':
     # Test loading
