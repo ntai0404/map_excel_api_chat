@@ -90,12 +90,23 @@ async def chat_with_ai(request: ChatRequest):
     is_location_request = search_intent.get('is_location_request') if search_intent else False
     
     if search_intent and not is_location_request:
-        # Step 1: Filter by Category (Strict Filter)
-        # If intent has a category, we ONLY look at stores in that category.
+        # Step 1: Filter by Category (Strict Filter with Fuzzy Logic)
         if search_intent.get('category'):
-            category_term = search_intent['category']
-            mask = stores_dataframe['category'].str.contains(category_term, case=False, na=False)
+            raw_cat = search_intent['category']
+            # Find best match in known categories to handle minor spacing/char diffs
+            import difflib
+            matches = difflib.get_close_matches(raw_cat, unique_categories, n=1, cutoff=0.7)
+            
+            if matches:
+                category_term = matches[0]
+                print(f"DEBUG: Mapped AI category '{raw_cat}' to System category '{category_term}'")
+            else:
+                category_term = raw_cat
+                print(f"DEBUG: No close match for '{raw_cat}' in system categories. Using raw value.")
+
+            mask = stores_dataframe['category'].str.contains(category_term, case=False, na=False, regex=False)
             filtered_stores = stores_dataframe[mask]
+            
             print(f"DEBUG: Filtered down to {len(filtered_stores)} stores in CATEGORY '{category_term}'")
         else:
             # If no category in intent, start with all stores
