@@ -279,6 +279,8 @@ async def zalo_callback(code: str = None, state: str = None, error: str = None, 
                 data=token_data_payload
             )
             
+            print(f"DEBUG: Token Response Status: {token_response.status_code}")
+            print(f"DEBUG: Token Response Body: {token_response.text}")
             token_data = token_response.json()
             
             if "access_token" not in token_data:

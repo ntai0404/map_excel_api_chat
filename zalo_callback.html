@@ -84,12 +84,9 @@
             if (false && state !== savedState) {
                 alert('Lỗi xác thực: State không khớp');
                 window.location.href = '/login.html';
-            } else if (!codeVerifier) {
-                alert('Lỗi: Không tìm thấy code verifier');
-                window.location.href = '/login.html';
             } else {
-                // Call backend with code and code_verifier
-                const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&code_verifier=${encodeURIComponent(codeVerifier)}`;
+                // Call backend (Standard Flow - No PKCE verifier needed)
+                const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
                 window.location.href = backendUrl;
             }
         } else {
