@@ -143,7 +143,13 @@ async def chat_with_ai(request: ChatRequest):
                         print(f"DEBUG: Generic term '{generic_term}' also not found. Falling back to full CATEGORY '{search_intent.get('category')}'")
                 else:
                     match_type = 'category'
-                    print(f"DEBUG: Product '{product_term}' not found. Falling back to {len(filtered_stores)} stores in CATEGORY '{search_intent.get('category')}'")
+                    if search_intent.get('category'):
+                        print(f"DEBUG: Product '{product_term}' not found. Falling back to {len(filtered_stores)} stores in CATEGORY '{search_intent.get('category')}'")
+                        # filtered_stores is already the category-filtered list
+                    else:
+                         # CRITICAL FIX: If no category and no product match, DO NOT return all stores.
+                         print(f"DEBUG: Product '{product_term}' not found and NO category specified. Returning empty.")
+                         filtered_stores = pd.DataFrame() # No match found
         
         elif not filtered_stores.empty:
              # Only Category matched (no product in intent)

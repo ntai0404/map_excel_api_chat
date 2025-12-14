@@ -210,6 +210,9 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
       
     - User: "Mua cái bàn làm việc" (Giả sử có danh mục "Nội thất")
       Output: {{"product": "bàn làm việc", "generic_term": "bàn", "category": "Nội thất", "is_location_request": false}}
+
+    - User: "đồ chơi người lớn" (Map sang danh mục gần nhất)
+      Output: {{"product": null, "generic_term": "đồ chơi", "category": "Đồ chơi người lớn , phòng the", "is_location_request": false}}
     """
     
     prompt = f"{system_instruction}\n\nUser Message: {user_message}"
