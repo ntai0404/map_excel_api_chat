@@ -152,6 +152,10 @@ async def chat_with_ai(request: ChatRequest):
                     else:
                         match_type = 'category'
                         print(f"DEBUG: Generic term '{generic_term}' also not found. Falling back to full CATEGORY '{search_intent.get('category')}'")
+                        
+                        # Fix: If no category to fallback to, we MUST clear results.
+                        if search_intent.get('category') is None:
+                             filtered_stores = pd.DataFrame()
                 else:
                     match_type = 'category'
                     if search_intent.get('category'):
