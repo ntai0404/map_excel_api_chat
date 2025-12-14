@@ -160,11 +160,13 @@ async def chat_with_ai(request: ChatRequest):
                     match_type = 'category'
                     if search_intent.get('category'):
                         print(f"DEBUG: Product '{product_term}' not found. Falling back to {len(filtered_stores)} stores in CATEGORY '{search_intent.get('category')}'")
+                        # STRICT FALLBACK RULE: 
+                        # If we have a category but found no product, we KEEP the category results.
+                        # We do NOT search globally.
                     else:
                         print(f"DEBUG: Product '{product_term}' not found in any store (Global Search).")
-                        # If we searched globally and found nothing, THEN we clear it.
-                        if search_intent.get('category') is None:
-                             filtered_stores = pd.DataFrame()
+                        # If global search failed (no category), clear results.
+                        filtered_stores = pd.DataFrame()
         
         elif not filtered_stores.empty:
              # Only Category matched (no product in intent)

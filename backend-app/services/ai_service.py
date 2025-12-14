@@ -200,8 +200,22 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
     system_instruction = f"""Bạn là công cụ trích xuất ý định tìm kiếm sản phẩm.
     Nhiệm vụ: Phân tích và trích xuất thông tin sang định dạng JSON.
     
-    DANH SÁCH NGÀNH HÀNG HỢP LỆ (Bắt buộc chọn 1 trong các mục này nếu liên quan):
-    {json.dumps(valid_categories, ensure_ascii=False)}
+    DANH SÁCH NGÀNH HÀNG HỢP LỆ (Bắt buộc chọn 1 trong các mục này nếu liên quan, copy Y HỆT từng dấu cách):
+    [
+        "Balo - Túi xách - Vali", "Bàn , ghế", "Bàn chải & Tăm nước", "Bàn phím & Chuột", "Bình nước nóng",
+        "Bếp từ , bếp điện", "Chăm sóc nhà cửa", "Củ cáp sạc", "Dịch vụ , phần mềm online…", "Dụng cụ cầm tay , máy khoan , cắt…",
+        "Dụng cụ nhà bếp", "Dụng cụ thể thao", "Kính mắt", "Loa", "Ly, cốc, bình giữ nhiệt", "Máy chiếu",
+        "Máy chơi game", "Máy hút ẩm , tạo ẩm , phun sương", "Máy lọc không khí", "Máy Massage", "Máy tính & Laptop",
+        "Máy xay - Máy ép", "Máy ảnh & Camera", "Mũ nón", "Mẹ và Bé", "Nhà cửa & đời sống", "Nội thất",
+        "Phòng ngủ", "Phụ kiện khác", "Phụ tùng", "Pin,Sạc dự phòng , ắc quy", "Quần áo", "Robot & Máy hút bụi , lau nhà",
+        "Sức khỏe & làm đẹp", "Tai nghe - Micro", "Thiết bị - Phụ kiện", "Thiết bị khác", "Thiết bị âm thanh",
+        "Thiết bị điện gia dụng", "Thùng các tông", "Thời trang", "Thực phẩm & Đồ ăn", "Tivi ; máy chiếu",
+        "Trang sức", "Trang trí nhà cửa", "Văn phòng phẩm", "Vỏ ốp lưng & miếng dán", "Vợt muỗi , đèn bắt muỗi",
+        "Xốp , bọt , cột khí", "Ô tô - Xe máy - Xe đạp", "Điều hòa - Quạt", "Điện thoại & phụ kiện", "Điện thoại",
+        "Đèn & ánh sáng", "Đồ Camping , phượt , cắm trại", "Đồ chơi - Phụ kiện", "Đồ chơi người lớn , phòng the",
+        "Đồ chơi", "Đồ dùng khác", "Đồ dùng nhà tắm", "Đồ phong thuỷ , tâm linh", "Đồng hồ"
+    ]
+    (Bỏ qua valid_categories truyền vào từ code, HÃY DÙNG DANH SÁCH CỐ ĐỊNH NÀY)
     
     Output JSON format:
     {{
