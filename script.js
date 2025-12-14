@@ -263,7 +263,8 @@ async function sendMessage() {
 
     appendMessage('ai', '<div class="typing-indicator">AI is typing...</div>'); // Typing indicator
 
-    const location = await getUserLocation(); // Get latest location before sending
+    // Use cached location if available to prevent repeated prompts
+    const location = currentUserLocation || await getUserLocation();
 
     const aiResponse = await fetchAIResponse(userMessage, location);
 
