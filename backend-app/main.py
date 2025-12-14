@@ -226,7 +226,9 @@ async def chat_with_ai(request: ChatRequest):
             ))
 
     # 4. Generate AI Response
-    ai_reply = await get_ai_response(user_message, nearest_stores_data, search_intent, match_type)
+    # Convert Pydantic models to dicts for the AI service
+    rich_store_data = [s.dict() for s in nearest_stores_response]
+    ai_reply = await get_ai_response(user_message, rich_store_data, search_intent, match_type)
 
     return ChatResponse(
         reply=ai_reply, 

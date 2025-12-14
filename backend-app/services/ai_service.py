@@ -87,28 +87,39 @@ async def get_ai_response(user_message: str, stores_info: list[dict] | None, sea
     prompt = f"{system_instruction}\n\n"
 
     if stores_info:
-        context = "Thông tin các cửa hàng gần nhất:\n"
+        context = "Thông tin các cửa hàng phù hợp nhất:\n"
         for i, store in enumerate(stores_info):
+            # Compatibility for different keys
+            name = store.get('name') or store.get('store_name')
+            
+            # Format product list
+            products_display = ""
+            if store.get('products'):
+                # Limit to 5 items to save tokens
+                p_names = [f"- {p['name']} ({p['price']})" for p in store['products'][:5]]
+                products_display = "\n    " + "\n    ".join(p_names)
+            else:
+                products_display = store.get('product_info', 'Đang cập nhật sản phẩm')
+
             context += (
-                f"Cửa hàng {i+1}:\n"
-                f"- Tên: {store['store_name']}\n"
+                f"Cửa hàng {i+1}: {name}\n"
                 f"- Khoảng cách: {store['distance_km']:.2f} km\n"
-                f"- Sản phẩm: {store['product_info']}\n"
-                f"- Khuyến mãi: {store['promotion']}\n"
-                f"- Địa chỉ: {store['address']}\n\n"
+                f"- Địa chỉ: {store['address']}\n"
+                f"- Sản phẩm tiêu biểu:{products_display}\n"
+                f"- Khuyến mãi: {store.get('promotion', 'Không')}\n\n"
             )
         prompt += f"Context: {context}\n\nUser Query: {user_message}.\n\n"
         
         if match_type == 'product':
-            prompt += "Chỉ dẫn:\n1. Người dùng tìm đúng sản phẩm có trong Context. Hãy báo tin vui và mời họ đến.\n2. Tóm tắt khuyến mãi hấp dẫn nhất."
+            prompt += "Chỉ dẫn:\n1. Người dùng tìm đúng sản phẩm có trong Context. Hãy báo tin vui và mời họ đến.\n2. Liệt kê các sản phẩm cụ thể có giá (nếu có)."
         elif match_type == 'category':
             product_name = search_intent.get('product')
-            category_name = search_intent.get('category') if search_intent else 'danh mục này'
+            category_name = search_intent.get('category') or 'danh mục này'
             
             if product_name:
-                prompt += f"Chỉ dẫn:\n1. Người dùng tìm '{product_name}' nhưng hiện tại KHÔNG có cửa hàng nào gần đây bán chính xác sản phẩm đó.\n2. Hệ thống tìm thấy các cửa hàng thuộc nhóm '{category_name}' để thay thế.\n3. Hãy nói rõ: 'Tiếc là mình không thấy cửa hàng nào có sẵn {product_name} ở gần bạn. Tuy nhiên, mình tìm thấy các cửa hàng {category_name} này có thể phù hợp...'.\n4. Giới thiệu ngắn gọn."
+                prompt += f"Chỉ dẫn:\n1. Người dùng tìm '{product_name}' nhưng KHÔNG có shop nào gần đây bán chính xác tên đó.\n2. Hệ thống đã tìm thấy các shop thuộc loại '{category_name}' thay thế.\n3. Hãy nói: 'Tiếc là mình không thấy {product_name} ở gần. Nhưng bạn có thể ghé các shop {category_name} này, họ có bán các sản phẩm tương tự như sau...'.\n4. Dựa vào Context, giới thiệu vài sản phẩm tiêu biểu của họ."
             else:
-                prompt += f"Chỉ dẫn:\n1. Người dùng đang tìm kiếm chung về '{category_name}' (hoặc các sản phẩm thuộc nhóm này).\n2. Hãy nói: 'Mình tìm thấy các cửa hàng {category_name} này phù hợp với nhu cầu của bạn...'.\n3. Giới thiệu ngắn gọn."
+                prompt += f"Chỉ dẫn:\n1. Người dùng tìm chung về '{category_name}'.\n2. Giới thiệu các shop tìm thấy và liệt kê một số sản phẩm tiêu biểu trong Context."
 
     elif search_intent and search_intent.get('is_location_request'):
         prompt += f"User Query: {user_message}.\n\nChỉ dẫn:\nNgười dùng đang hỏi về vị trí. Hãy trả lời ngắn gọn: '...' (Frontend sẽ tự động xử lý phần còn lại)."
@@ -162,28 +173,44 @@ async def extract_search_intent(user_message: str, valid_categories: list[str] |
     # generic_keywords = ["mua đồ", "sắm đồ", "mua sắm", "shopping", "mua gì đó"]
     # ... code removed ...
 
-    system_instruction = f"""Bạn là công cụ trích xuất ý định.
-Nhiệm vụ: Trích xuất 'product', 'generic_term', 'category' và 'is_location_request'.
-Output format: JSON ONLY.
-Rules:
-1. ƯU TIÊN TUYỆT ĐỐI: Nếu câu hỏi có chứa từ khóa "vị trí", "ở đâu", "tọa độ", "định vị" VÀ ám chỉ người dùng (tôi, mình, user) -> set "is_location_request": true.
-2. Nếu tìm sản phẩm:
-- "product": Tên cụ thể (iPhone 16).
-   - "generic_term": Từ khóa chung nhất (iPhone, Laptop, Giày).
-   - "category": Chọn từ danh sách {valid_categories}.
-   
-3. QUAN TRỌNG: XỬ LÝ KHI KHÔNG RÕ RÀNG
-   - Nếu câu hỏi quá chung chung (VD: "tôi muốn mua đồ", "shopping", "mua sắm") -> Return tất cả null.
-   - Nếu câu hỏi có từ khóa sản phẩm nhưng chưa cụ thể (VD: "đồ chơi giáo dục", "đồ gia dụng", "đồ dùng nhà bếp"...):
-     -> "product": [Từ khóa chính] (VD: "đồ chơi", "đồ gia dụng")
-     -> "category": Tìm category gần nhất trong danh sách.
-     -> KHÔNG trả về null nếu đã xác định được nhóm hàng.
+    system_instruction = f"""Bạn là công cụ trích xuất ý định tìm kiếm sản phẩm.
+    Nhiệm vụ: Phân tích và trích xuất thông tin sang định dạng JSON.
+    
+    DANH SÁCH NGÀNH HÀNG HỢP LỆ (Bắt buộc chọn 1 trong các mục này nếu liên quan):
+    {json.dumps(valid_categories, ensure_ascii=False)}
+    
+    Output JSON format:
+    {{
+        "product": "tên sản phẩm cụ thể hoặc null",
+        "generic_term": "tên loại sản phẩm chung hoặc null",
+        "category": "TÊN NGÀNH HÀNG CHÍNH XÁC (copy 100% từ danh sách trên) hoặc null",
+        "is_location_request": boolean
+    }}
 
-Ví dụ:
-- "tôi muốn mua đồ" -> {{"product": null, "generic_term": null, "category": null, "is_location_request": false}}
-- "Mua iPhone 16" -> {{"product": "iPhone 16", "generic_term": "iPhone", "category": "Công nghệ", "is_location_request": false}}
-- "đồ chơi giáo dục" -> {{"product": "đồ chơi", "generic_term": "đồ chơi", "category": "Đồ chơi", "is_location_request": false}}
-"""
+    QUY LUẬT XỬ LÝ:
+    1. ƯU TIÊN VỊ TRÍ: Nếu người dùng hỏi "vị trí", "ở đâu", "tọa độ" (ám chỉ bản thân họ) -> "is_location_request": true.
+    
+    2. XÁC ĐỊNH NGÀNH HÀNG (QUAN TRỌNG NHẤT):
+       - Dựa vào từ khóa sản phẩm, hãy tìm trong Danh Sách Ngành Hàng mục nào phù hợp nhất.
+       - Ví dụ: "Mua iPhone" -> category: "Điện thoại" (hoặc "Công nghệ" tùy danh sách).
+       - Ví dụ: "Ăn phở" -> category: "Thực phẩm & Đồ ăn".
+       - Nếu không tìm thấy ngành hàng phù hợp -> category: null.
+       
+    3. XÁC ĐỊNH SẢN PHẨM:
+       - "product": Từ khóa chính xác người dùng nhập (VD: "bánh mì chảo", "iphone 15 pro max").
+       - "generic_term": Loại sản phẩm (VD: "bánh mì", "điện thoại").
+       
+    4. TRƯỜNG HỢP KHÓ / CHUNG CHUNG:
+       - "mua đồ", "shopping" -> Return all null.
+       - "đồ ăn", "ăn uống" -> "category": "Thực phẩm & Đồ ăn" (Chọn từ danh sách), "product": "đồ ăn".
+    
+    Ví dụ mẫu:
+    - User: "Tìm quán phở bò"
+      Output: {{"product": "phở bò", "generic_term": "phở", "category": "Thực phẩm & Đồ ăn", "is_location_request": false}}
+      
+    - User: "Mua cái bàn làm việc" (Giả sử có danh mục "Nội thất")
+      Output: {{"product": "bàn làm việc", "generic_term": "bàn", "category": "Nội thất", "is_location_request": false}}
+    """
     
     prompt = f"{system_instruction}\n\nUser Message: {user_message}"
 
