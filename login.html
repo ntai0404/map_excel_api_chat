@@ -255,9 +255,16 @@
             // Save state to localStorage for later verification
             localStorage.setItem('zalo_oauth_state', STATE);
 
-            // Build Zalo OAuth V4 URL WITHOUT PKCE (Standard Web Flow)
-            // Using Client Secret on backend is sufficient for security
-            const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${ZALO_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${STATE}`;
+            // Generate code_verifier and code_challenge for PKCE
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+            // Save code_verifier to localStorage (needed for callback)
+            localStorage.setItem('zalo_code_verifier', codeVerifier);
+
+            // Build Zalo OAuth V4 URL WITH PKCE
+            // Correct parameters: app_id, redirect_uri, code_challenge, state
+            const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${ZALO_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge=${codeChallenge}&state=${STATE}`;
 
             document.getElementById('loading').classList.add('active');
 

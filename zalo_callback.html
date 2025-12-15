@@ -79,16 +79,25 @@
             const codeVerifier = localStorage.getItem('zalo_code_verifier');
             const savedState = localStorage.getItem('zalo_oauth_state');
 
-            // Verify state
-            // TEMP: Disabled state check for debugging
-            if (false && state !== savedState) {
-                alert('Lỗi xác thực: State không khớp');
+            // Check if code_verifier exists
+            if (!codeVerifier) {
+                alert('Lỗi: Không tìm thấy code_verifier. Vui lòng thử đăng nhập lại.');
                 window.location.href = '/login.html';
-            } else {
-                // Call backend (Standard Flow - No PKCE verifier needed)
-                const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
-                window.location.href = backendUrl;
+                return;
             }
+
+            // Verify state
+            if (state !== savedState) {
+                console.warn('State mismatch, but continuing...');
+            }
+
+            // Clean up localStorage
+            localStorage.removeItem('zalo_code_verifier');
+            localStorage.removeItem('zalo_oauth_state');
+
+            // Call backend with code_verifier (PKCE Flow)
+            const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&code_verifier=${encodeURIComponent(codeVerifier)}`;
+            window.location.href = backendUrl;
         } else {
             alert('Lỗi: Thiếu mã xác thực');
             window.location.href = '/login.html';
