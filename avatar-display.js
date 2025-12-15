@@ -77,6 +77,9 @@
                     logoutBtn.addEventListener('click', function () {
                         if (confirm('Bạn có chắc muốn đăng xuất?')) {
                             localStorage.clear();
+                            sessionStorage.clear();  // Clear session storage too
+                            // Clear URL parameters to prevent auto-restore
+                            window.history.replaceState({}, document.title, window.location.pathname);
                             window.location.href = 'login.html?t=' + new Date().getTime();
                         }
                     });
@@ -115,28 +118,29 @@
                 // Defer history clean up slightly or keep it, but ensure we use the NEW values
             }
 
+
             // Call original function if it exists
             if (typeof originalInitializeSession === 'function') {
                 originalInitializeSession();
-            } else {
-                // If original doesn't exist, do the checks here
-                const storedUserType = localStorage.getItem('user_type');
-                const storedLoginTime = localStorage.getItem('login_time');
+            }
 
-                if (!storedUserType || !storedLoginTime) {
-                    window.location.href = 'login.html?t=' + new Date().getTime();
-                    return false;
-                }
+            // CRITICAL: Always validate session (even if originalInitializeSession exists)
+            const storedUserType = localStorage.getItem('user_type');
+            const storedLoginTime = localStorage.getItem('login_time');
 
-                const loginDate = new Date(storedLoginTime);
-                const now = new Date();
-                const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
+            if (!storedUserType || !storedLoginTime) {
+                window.location.href = 'login.html?t=' + new Date().getTime();
+                return false;
+            }
 
-                if (hoursDiff >= 24) {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
-                    return false;
-                }
+            const loginDate = new Date(storedLoginTime);
+            const now = new Date();
+            const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
+
+            if (hoursDiff >= 24) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+                return false;
             }
 
             // Display user info
