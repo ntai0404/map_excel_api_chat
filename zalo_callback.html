@@ -83,21 +83,20 @@
             if (!codeVerifier) {
                 alert('Lỗi: Không tìm thấy code_verifier. Vui lòng thử đăng nhập lại.');
                 window.location.href = '/login.html';
-                return;
+            } else {
+                // Verify state
+                if (state !== savedState) {
+                    console.warn('State mismatch, but continuing...');
+                }
+
+                // Clean up localStorage
+                localStorage.removeItem('zalo_code_verifier');
+                localStorage.removeItem('zalo_oauth_state');
+
+                // Call backend with code_verifier (PKCE Flow)
+                const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&code_verifier=${encodeURIComponent(codeVerifier)}`;
+                window.location.href = backendUrl;
             }
-
-            // Verify state
-            if (state !== savedState) {
-                console.warn('State mismatch, but continuing...');
-            }
-
-            // Clean up localStorage
-            localStorage.removeItem('zalo_code_verifier');
-            localStorage.removeItem('zalo_oauth_state');
-
-            // Call backend with code_verifier (PKCE Flow)
-            const backendUrl = `/auth/zalo/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}&code_verifier=${encodeURIComponent(codeVerifier)}`;
-            window.location.href = backendUrl;
         } else {
             alert('Lỗi: Thiếu mã xác thực');
             window.location.href = '/login.html';
