@@ -113,9 +113,9 @@
                 }
                 localStorage.setItem('login_time', loginTime || new Date().toISOString());
 
-                // Force refresh of userType variable for subsequent checks
-                // window.history.replaceState({}, document.title, window.location.pathname); 
-                // Defer history clean up slightly or keep it, but ensure we use the NEW values
+                // CRITICAL: Clean up URL immediately after restoring session
+                // This prevents session from being restored again on refresh/back button
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
 
 
