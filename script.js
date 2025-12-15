@@ -84,6 +84,24 @@ style.innerHTML = `
         color: #d9534f;
         font-weight: bold;
     }
+    .product-link-btn {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 3px 8px;
+        background-color: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 3px;
+        font-size: 0.75em;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .product-link-btn:hover {
+        background-color: #218838;
+        color: white;
+        transform: scale(1.05);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 `;
 document.head.appendChild(style);
 
@@ -284,7 +302,16 @@ async function sendMessage() {
         const storeListHtml = document.createElement('div');
         storeListHtml.className = 'store-list';
 
+        // DEBUG: Log product data to check if 'link' field exists
+        console.log('🔍 DEBUG: Store data from backend:', aiResponse.map_data.store_markers);
+
         aiResponse.map_data.store_markers.forEach(store => {
+            // DEBUG: Log each product's link status
+            if (store.products) {
+                store.products.forEach(p => {
+                    console.log(`Product: ${p.name}, Has Link: ${!!p.link}, Link: ${p.link}`);
+                });
+            }
             const card = document.createElement('div');
             card.className = 'store-card';
             // Add click event to focus map
@@ -304,6 +331,7 @@ async function sendMessage() {
                                 <div class="product-info">
                                     <div class="product-name" title="${p.name}">${p.name}</div>
                                     <div class="product-price">${p.price}</div>
+                                    ${p.link ? `<a href="${p.link}" target="_blank" class="product-link-btn" onclick="event.stopPropagation()">🔗 Xem sản phẩm</a>` : ''}
                                 </div>
                             </div>
                         `).join('')}
