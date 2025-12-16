@@ -558,8 +558,9 @@ async def zalo_callback(code: str = None, state: str = None, error: str = None, 
                 "type": "zalo"
             }
             
-            # Redirect to frontend with session info
-            frontend_url = "http://127.0.0.1:8000/index.html"
+            # Build frontend URL dynamically from request
+            # This works for both localhost and production domains
+            frontend_url = "/index.html"  # Use relative path
             encoded_name = quote(user_data.get("name", "User"))
             user_picture_url = user_data.get("picture", {}).get("data", {}).get("url", "")
             encoded_picture = quote(user_picture_url) if user_picture_url else ""
