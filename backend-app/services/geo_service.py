@@ -64,7 +64,7 @@ def geocode_address(address, cache=None):
             print(f"Could not geocode: {address}")
             return None
     except Exception as e:
-        print(f"Geocoding error for {address}: {e}")
+        print(f"!!! CRITICAL Geocoding error for {address}: {e}")
         return None
 
 def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFrame, limit: int = 3):

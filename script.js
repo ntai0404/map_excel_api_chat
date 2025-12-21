@@ -3,6 +3,74 @@ let map;
 let userMarker;
 let storeMarkers = L.featureGroup();
 let currentUserLocation = null;
+let chatHistory = []; // Global history array
+
+// Icons configuration (Global to avoid re-creation and ensures CDN priority)
+const redIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+const blueIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Configure Markdown renderer safely
+if (typeof marked !== 'undefined') {
+    const renderer = new marked.Renderer();
+    renderer.link = function (href, title, text) {
+        // Prevent undefined hrefs if possible, though strictness is good
+        if (!href || href === 'undefined' || href === 'null') href = '#';
+        return `<a href="${href}" title="${title || ''}" target="_self">${text}</a>`;
+    };
+    marked.setOptions({ renderer: renderer });
+}
+
+// --- Chat History Persistence ---
+function getStorage() {
+    // We use sessionStorage for all users' chat history to ensure privacy on shared devices.
+    // This persists during same-tab navigation but clears when the tab is closed.
+    return sessionStorage;
+}
+
+function getHistoryKey() {
+    const sessionId = localStorage.getItem('session_id') || 'guest';
+    return `chat_history_${sessionId}`;
+}
+
+function saveHistory() {
+    const storage = getStorage();
+    storage.setItem(getHistoryKey(), JSON.stringify(chatHistory));
+}
+
+function loadHistory() {
+    const storage = getStorage();
+    const saved = storage.getItem(getHistoryKey());
+    if (saved) {
+        try {
+            chatHistory = JSON.parse(saved);
+            chatHistory.forEach(item => {
+                if (item.type === 'message') {
+                    renderMessage(item.sender, item.text, false);
+                } else if (item.type === 'stores') {
+                    renderStoreCards(item.data, false);
+                }
+            });
+        } catch (e) {
+            console.error("Error loading history:", e);
+            chatHistory = [];
+        }
+    }
+}
 
 // Inject CSS for Store Cards
 const style = document.createElement('style');
@@ -114,6 +182,9 @@ function initializeMap() {
     }).addTo(map);
 
     storeMarkers.addTo(map);
+
+    // Fix for Leaflet images not loading from absolute paths (prevents 404 spinning)
+    L.Icon.Default.imagePath = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/';
 }
 
 function updateMap(userLat, userLng, stores) {
@@ -122,7 +193,7 @@ function updateMap(userLat, userLng, stores) {
     }
 
     if (userLat && userLng) {
-        userMarker = L.marker([userLat, userLng]).addTo(map)
+        userMarker = L.marker([userLat, userLng], { icon: redIcon }).addTo(map)
             .bindPopup('You are here').openPopup();
         map.setView([userLat, userLng], 13);
     }
@@ -135,7 +206,7 @@ function updateMap(userLat, userLng, stores) {
                 const zaloLink = store.zalo_group_link ?
                     `<br><a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" style="margin-top: 8px;">💬 Tham gia nhóm Zalo</a>` : '';
 
-                L.marker([store.lat, store.lng])
+                L.marker([store.lat, store.lng], { icon: blueIcon })
                     .addTo(storeMarkers)
                     .bindPopup(`<b>${store.name}</b><br>${store.description || ''}${zaloLink}`).openPopup();
             });
@@ -153,49 +224,62 @@ function updateMap(userLat, userLng, stores) {
             stores.forEach(store => bounds.extend([store.lat, store.lng]));
             map.fitBounds(bounds, { padding: [50, 50] });
         } else {
-            map.setView([stores[0].lat, stores[0].lng], 13);
         }
     }
 }
 
-// 3.2. Xử lý Vị trí (Geolocation)
+// --- Geolocation Logic ---
+let isLocating = false;
+
 function getUserLocation() {
-    return new Promise((resolve, reject) => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    currentUserLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    // Pass null for stores to preserve existing markers
-                    updateMap(currentUserLocation.lat, currentUserLocation.lng, null);
-                    resolve(currentUserLocation);
-                },
-                (error) => {
-                    console.error("Error getting user location:", error);
-                    // Fallback: If we already have a location, use it!
-                    if (currentUserLocation) {
-                        console.log("Using cached location after error.");
-                        resolve(currentUserLocation);
-                    } else {
-                        alert("Unable to retrieve your location. Please allow location access or type your address.");
-                        resolve(null);
-                    }
+    if (isLocating) {
+        console.log("GPS: Request already in progress, waiting...");
+        return new Promise((resolve) => {
+            const check = setInterval(() => {
+                if (!isLocating) {
+                    clearInterval(check);
+                    resolve(currentUserLocation || null);
                 }
-            );
-        } else {
-            alert("Geolocation is not supported by this browser.");
-            // If geolocation is not supported, we should not clear a potentially existing cached location.
-            // Only resolve null if there's no cached location.
-            if (currentUserLocation) {
-                console.log("Geolocation not supported, but using cached location.");
-                resolve(currentUserLocation);
-            } else {
-                currentUserLocation = null;
-                resolve(null);
-            }
+            }, 500);
+        });
+    }
+
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            console.warn("GPS: Geolocation not supported.");
+            resolve(null);
+            return;
         }
+
+        isLocating = true;
+
+        // Browser options: 30s timeout, use 5-min cache if available
+        const options = {
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 300000
+        };
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                isLocating = false;
+                currentUserLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                console.log("GPS: Success!", currentUserLocation);
+                sessionStorage.setItem('last_location', JSON.stringify(currentUserLocation));
+                updateMap(currentUserLocation.lat, currentUserLocation.lng, null);
+                resolve(currentUserLocation);
+            },
+            (error) => {
+                isLocating = false;
+                console.warn("GPS: Failed with error code:", error.code, error.message);
+                // Return cached location if valid, else null
+                resolve(currentUserLocation || null);
+            },
+            options
+        );
     });
 }
 
@@ -262,6 +346,10 @@ const sendButton = document.getElementById('send-button');
 const locationButton = document.getElementById('location-button');
 
 function appendMessage(sender, text) {
+    return renderMessage(sender, text, true);
+}
+
+function renderMessage(sender, text, save = true) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message', sender);
 
@@ -271,6 +359,13 @@ function appendMessage(sender, text) {
     messageElement.innerHTML = `<div class="message-bubble">${content}</div>`;
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to bottom
+
+    // DON'T save temporary typing indicators to history
+    if (save && !text.includes('typing-indicator')) {
+        chatHistory.push({ type: 'message', sender, text });
+        saveHistory();
+    }
+    return messageElement;
 }
 
 async function sendMessage() {
@@ -280,7 +375,7 @@ async function sendMessage() {
     appendMessage('user', userMessage);
     chatInput.value = '';
 
-    appendMessage('ai', '<div class="typing-indicator">AI is typing...</div>'); // Typing indicator
+    const typingIndicator = renderMessage('ai', '<div class="typing-indicator">AI is typing...</div>', false); // Don't save this
 
     // Use cached location if available to prevent repeated prompts
     const location = currentUserLocation || await getUserLocation();
@@ -288,76 +383,87 @@ async function sendMessage() {
     const aiResponse = await fetchAIResponse(userMessage, location);
 
     // Remove typing indicator
-    const typingIndicator = chatMessages.querySelector('.typing-indicator');
     if (typingIndicator) {
-        typingIndicator.parentNode.remove();
+        typingIndicator.remove();
     }
 
-    if (!aiResponse.trigger_location) {
+    if (aiResponse && !aiResponse.trigger_location) {
         appendMessage('ai', aiResponse.text);
     }
 
     // Render Store Cards
     if (aiResponse.map_data && aiResponse.map_data.store_markers && aiResponse.map_data.store_markers.length > 0) {
-        const storeListHtml = document.createElement('div');
-        storeListHtml.className = 'store-list';
-
-        // DEBUG: Log product data to check if 'link' field exists
-        console.log('🔍 DEBUG: Store data from backend:', aiResponse.map_data.store_markers);
-
-        aiResponse.map_data.store_markers.forEach(store => {
-            // DEBUG: Log each product's link status
-            if (store.products) {
-                store.products.forEach(p => {
-                    console.log(`Product: ${p.name}, Has Link: ${!!p.link}, Link: ${p.link}`);
-                });
-            }
-            const card = document.createElement('div');
-            card.className = 'store-card';
-            // Add click event to focus map
-            card.onclick = () => focusOnStore(store.lat, store.lng, store.name);
-            card.style.cursor = 'pointer'; // Show pointer to indicate clickable
-
-            card.innerHTML = `
-                <div class="store-name">${store.name}</div>
-                <div class="store-address">${store.description}</div>
-                <div class="store-distance">📏 Cách bạn: ${store.distance_km ? store.distance_km.toFixed(1) : '?'} km</div>
-                
-                ${store.products && store.products.length > 0 ? `
-                    <div class="product-list">
-                        ${store.products.map(p => `
-                            <div class="product-item">
-                                <img src="${p.image_url || 'https://via.placeholder.com/120'}" class="product-img" onerror="this.src='https://via.placeholder.com/120?text=No+Image'">
-                                <div class="product-info">
-                                    <div class="product-name" title="${p.name}">${p.name}</div>
-                                    <div class="product-price">${p.price}</div>
-                                    ${p.link ? `<a href="${p.link}" target="_blank" class="product-link-btn" onclick="event.stopPropagation()">🔗 Xem sản phẩm</a>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-
-                ${store.zalo_group_link ?
-                    `<a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" onclick="event.stopPropagation()">💬 Tham gia nhóm Zalo</a>`
-                    : ''}
-            `;
-            storeListHtml.appendChild(card);
-        });
-        chatMessages.appendChild(storeListHtml);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        updateMap(
-            aiResponse.map_data.user_marker ? aiResponse.map_data.user_marker.lat : null,
-            aiResponse.map_data.user_marker ? aiResponse.map_data.user_marker.lng : null,
-            aiResponse.map_data.store_markers
-        );
+        renderStoreCards(aiResponse.map_data.store_markers, true);
     }
 
     // Auto-trigger location if backend requested it
     if (aiResponse.trigger_location) {
         console.log("Backend requested location trigger.");
         handleLocationCheck(true);
+    }
+}
+
+function clearHistory() {
+    chatHistory = [];
+    localStorage.removeItem(getHistoryKey());
+    sessionStorage.removeItem(getHistoryKey());
+}
+
+function renderStoreCards(stores, save = true) {
+    const storeListHtml = document.createElement('div');
+    storeListHtml.className = 'store-list';
+
+    stores.forEach(store => {
+        const card = document.createElement('div');
+        card.className = 'store-card';
+        card.onclick = () => focusOnStore(store.lat, store.lng, store.name);
+        card.style.cursor = 'pointer';
+
+        card.innerHTML = `
+            <div class="store-name">${store.name}</div>
+            <div class="store-address">${store.description}</div>
+            <div class="store-distance">📏 Cách bạn: ${store.distance_km ? store.distance_km.toFixed(1) : '?'} km</div>
+            
+            ${store.products && store.products.length > 0 ? `
+                <div class="product-list">
+                    ${store.products.map(p => {
+            // Inject Zalo link into the proxy URL for persistence
+            let finalLink = p.link || '#';
+            if (store.zalo_group_link && finalLink !== '#') {
+                const separator = finalLink.includes('?') ? '&' : '?';
+                finalLink += `${separator}zalo=${encodeURIComponent(store.zalo_group_link)}`;
+            }
+            return `
+                        <div class="product-item">
+                            <img src="${p.image_url || 'https://via.placeholder.com/120'}" class="product-img" onerror="this.src='https://via.placeholder.com/120?text=No+Image'">
+                            <div class="product-info">
+                                <div class="product-name" title="${p.name}">${p.name}</div>
+                                <div class="product-price">${p.price}</div>
+                                <a href="${finalLink}" target="_self" class="product-link-btn" onclick="event.stopPropagation()">🔗 Xem sản phẩm</a>
+                            </div>
+                        </div>
+                        `;
+        }).join('')}
+                </div>
+            ` : ''}
+
+            ${store.zalo_group_link ?
+                `<a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" onclick="event.stopPropagation()">💬 Tham gia nhóm Zalo</a>`
+                : ''}
+        `;
+        storeListHtml.appendChild(card);
+    });
+    chatMessages.appendChild(storeListHtml);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Update map markers (Keep user marker if exists)
+    const lat = currentUserLocation ? currentUserLocation.lat : null;
+    const lng = currentUserLocation ? currentUserLocation.lng : null;
+    updateMap(lat, lng, stores);
+
+    if (save) {
+        chatHistory.push({ type: 'stores', data: stores });
+        saveHistory();
     }
 }
 
@@ -382,40 +488,175 @@ chatInput.addEventListener('keypress', function (e) {
     }
 });
 
-// 3.5. Xử lý logic lấy vị trí (Refactored)
+// --- 3.5. Xử lý logic lấy vị trí (Refactored - Silent UI) ---
 async function handleLocationCheck(isAutoTriggered = false) {
-    if (!isAutoTriggered) {
-        appendMessage('user', 'Vị trí của tôi');
-    }
+    if (isLocating) return;
 
-    appendMessage('ai', '<div class="typing-indicator">Đang lấy vị trí...</div>');
-    const location = await getUserLocation();
+    // UI Feedback on button
+    const locBtnIcon = locationButton.querySelector('i');
+    if (locBtnIcon) locBtnIcon.className = 'fas fa-spinner fa-spin';
+    locationButton.disabled = true;
 
-    const typingIndicator = chatMessages.querySelector('.typing-indicator');
-    if (typingIndicator) {
-        typingIndicator.parentNode.remove();
-    }
+    try {
+        const location = await getUserLocation();
 
-    if (location) {
-        appendMessage('ai', `Đã xác định được vị trí của bạn: Lat ${location.lat}, Lng ${location.lng}. Tôi có thể giúp bạn tìm gì gần đây?`);
-    } else {
-        appendMessage('ai', 'Không thể lấy vị trí của bạn. Vui lòng thử lại hoặc nhập địa chỉ cụ thể.');
+        if (location) {
+            // Updated logic: ALWAYS silent for auto-trigger (as requested by user)
+            // Manual click (!isAutoTriggered) still shows feedback
+            if (!isAutoTriggered) {
+                renderMessage('ai', `Đã xác định được vị trí của bạn: Lat ${location.lat}, Lng ${location.lng}. Tôi có thể giúp bạn tìm gì gần đây?`, true);
+            }
+            // Still mark resolved so we don't nag
+            sessionStorage.setItem('locationResolved', 'true');
+        } else if (!isAutoTriggered) {
+            renderMessage('ai', 'Không thể lấy vị trí. Vui lòng kiểm tra cài đặt trình duyệt và thử lại.', true);
+        }
+    } catch (err) {
+        console.error("Location error:", err);
+    } finally {
+        if (locBtnIcon) locBtnIcon.className = 'fas fa-map-marker-alt';
+        locationButton.disabled = false;
     }
 }
 
-locationButton.addEventListener('click', () => handleLocationCheck(false));
+locationButton.addEventListener('click', () => {
+    renderMessage('user', 'Vị trí của tôi', true);
+    handleLocationCheck(false);
+});
 
-// Initialize map on load
+function removeAllLoadingIndicators() {
+    try {
+        const indicators = document.querySelectorAll('.typing-indicator');
+        indicators.forEach(ind => {
+            const msg = ind.closest('.message');
+            if (msg) msg.remove();
+        });
+    } catch (e) {
+        console.error("Error cleaning indicators:", e);
+    }
+}
+
+// --- Initialization & Simple Permission Logic ---
 document.addEventListener('DOMContentLoaded', () => {
     initializeMap();
-    getUserLocation(); // Get initial user location
+    loadHistory(); // Reload history first
 
-    // Send welcome message only once per session
+    // Safety: Remove any indicators that might have leaked into history or remained stuck
+    removeAllLoadingIndicators();
+
+    // Try to restore cached location
+    const cachedLocation = sessionStorage.getItem('last_location');
+    if (cachedLocation) {
+        currentUserLocation = JSON.parse(cachedLocation);
+        updateMap(currentUserLocation.lat, currentUserLocation.lng, null);
+    }
+
+    // Send welcome message
     if (!sessionStorage.getItem('welcomeShown')) {
         setTimeout(() => {
             appendMessage('ai', 'Xin chào! Chúc bạn một ngày tốt lành! 😊 Bạn muốn tìm mua sản phẩm gì hôm nay ạ?');
             sessionStorage.setItem('welcomeShown', 'true');
+
+            // Proactively ask for permission using simple browser confirm()
+            if (!currentUserLocation) {
+                setTimeout(() => {
+                    const ask = window.confirm("Cửa hàng cần truy cập vị trí của bạn để tìm shop gần nhất. Bạn có đồng ý không?");
+                    if (ask) {
+                        handleLocationCheck(true);
+                    }
+                }, 1500);
+            }
         }, 500);
     }
-});
 
+    // Process product interest from query params (when redirected from /view page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('product_interest');
+    const productName = urlParams.get('product_name');
+    const zaloFromUrl = urlParams.get('zalo'); // PERSISTENCE FROM PROXY
+
+    console.log("DEBUG: Init Params - ID:", productId, "Name:", productName, "Zalo:", zaloFromUrl);
+
+    // FIX: Clean corrupted avatar from localStorage if present
+    const userPic = localStorage.getItem('user_picture');
+    if (userPic && (userPic === '[object Object]' || userPic.includes('object'))) {
+        console.warn("Found corrupted user_picture, clearing.");
+        localStorage.removeItem('user_picture');
+    }
+    // FIX: Clean corrupted zalo_code_verifier from localStorage if present
+    const zaloCodeVerifier = localStorage.getItem('zalo_code_verifier');
+    if (zaloCodeVerifier && (zaloCodeVerifier === '[object Object]' || zaloCodeVerifier.includes('object'))) {
+        console.warn("Found corrupted zalo_code_verifier, clearing.");
+        localStorage.removeItem('zalo_code_verifier');
+    }
+
+    if (productId && productName && !sessionStorage.getItem('productProcessed_' + productId)) {
+        // Prevent re-processing on refresh
+        sessionStorage.setItem('productProcessed_' + productId, 'true');
+
+        const decodedName = decodeURIComponent(productName);
+        const userName = localStorage.getItem('user_name') || 'Khách';
+
+        // Restore format: [Hệ thống ghi nhận user **Nguyễn Xuân Tài** đang quan tâm sản phẩm: **Tên SP**]
+        const systemMessage = `[Hệ thống ghi nhận user **${userName}** đang quan tâm sản phẩm: **${decodedName}**]`;
+        appendMessage('ai', systemMessage);
+
+        // OPTIMIZATION: If Zalo link preserved from Proxy, show immediately!
+        // Use strict check and raw HTML to bypass Markdown issues
+        if (zaloFromUrl && zaloFromUrl !== "undefined" && zaloFromUrl !== "null" && zaloFromUrl.startsWith('http')) {
+            const safeLink = zaloFromUrl.trim();
+            // Use Raw HTML to ensure link works
+            appendMessage('ai', `Bấm vào link Zalo bên dưới để chat với shop ngay! 👇<br><br><a href="${safeLink}" target="_blank" style="color: #0068FF; font-weight: bold; text-decoration: underline;">Kết nối Zalo</a>`);
+            return; // Skip API call
+        }
+
+        const statusMsg = renderMessage('ai', '<div class="typing-indicator">Đang lấy thông tin shop...</div>', false);
+        setTimeout(async () => {
+            try {
+                // Use standard API path
+                const response = await fetch(`${window.location.origin}/api/product-info/${productId}`);
+                const data = await response.json();
+                console.log("DEBUG: Product Info Data:", data);
+
+                if (data && !data.error) {
+                    const shopDisplay = data.shop_name || "Cửa hàng";
+
+                    // FIX: Strict type coercion to prevent [object Object]
+                    let finalZalo = "";
+                    if (data.zalo_link) {
+                        if (typeof data.zalo_link === 'string') {
+                            finalZalo = data.zalo_link.trim();
+                        } else {
+                            // Defensive: try to stringify or fallback
+                            try {
+                                finalZalo = String(data.zalo_link);
+                                if (finalZalo === '[object Object]') finalZalo = "";
+                            } catch (e) { finalZalo = ""; }
+                        }
+                    }
+
+                    if (finalZalo) {
+                        appendMessage('ai', `Bấm vào link Zalo bên dưới để chat với shop **${shopDisplay}** ngay! 👇\n\n[Kết nối Zalo](${finalZalo})`);
+                    } else {
+                        appendMessage('ai', `Cửa hàng **${shopDisplay}** hiện chưa cập nhật link Zalo. Bạn có muốn nhắn tin hỏi shop không?`);
+                    }
+                } else {
+                    console.error("API Error or Empty Data:", data);
+                    appendMessage('ai', "Không tìm thấy thông tin shop cho sản phẩm này.");
+                }
+            } catch (err) {
+                console.error("Error fetching product info:", err);
+            } finally {
+                if (statusMsg) statusMsg.remove();
+            }
+        }, 500);
+
+        // CLEARING URL REDIRECT removed as per user request to keep full path/params
+        // window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Suppress welcome message for this mission-specific landing
+        sessionStorage.setItem('welcomeShown', 'true');
+    }
+
+    console.log("Chat initialized V3.8");
+});

@@ -138,12 +138,19 @@ def aggregate_shops(products_df):
         
         # Try to find 'Link Zalo' column with case-insensitive search
         zalo_link = ''
-        for col in first_product.index:
+        zalo_col_name = None
+        
+        # First find the column name
+        for col in products_df.columns:
             if str(col).strip().lower() == 'link zalo':
-                val = first_product[col]
-                if pd.notna(val):
-                    zalo_link = str(val).strip()
+                zalo_col_name = col
                 break
+        
+        # If column exists, find first non-null value in the group
+        if zalo_col_name:
+            valid_links = group[zalo_col_name].dropna()
+            if not valid_links.empty:
+                zalo_link = str(valid_links.iloc[0]).strip()
         
         # Create a searchable string of product names (top 20)
         product_names = group['Tên sản phẩm'].dropna().unique().tolist()

@@ -16,6 +16,17 @@ body {
     align-items: center;
 }
 
+/* Bot Logo Styling */
+.bot-logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* Main App Card */
 .app-card {
     background-color: #fff;

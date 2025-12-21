@@ -61,7 +61,7 @@
                 // Order: Avatar -> Name -> Action Button
                 chatHeader.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center w-100">
-                        <h5 class="m-0"><i class="fas fa-robot me-2"></i>Trợ lý ảo</h5>
+                        <h5 class="m-0"><img src="assets/bot-logo.jpg" alt="Logo" class="bot-logo-img">Trợ lý ảo</h5>
                         <div class="d-flex align-items-center gap-2">
                             ${userInfoHtml} <!-- Contains Avatar + Name -->
                             ${actionBtnHtml}
@@ -78,16 +78,19 @@
                         if (confirm('Bạn có chắc muốn đăng xuất?')) {
                             localStorage.clear();
                             sessionStorage.clear();  // Clear session storage too
+                            if (window.clearHistory) window.clearHistory(); // Clear chat history
                             // Clear URL parameters to prevent auto-restore
-                            window.history.replaceState({}, document.title, window.location.pathname);
-                            window.location.href = 'login.html?t=' + new Date().getTime();
+                            const loginUrl = window.location.origin + '/login.html?t=' + new Date().getTime();
+                            window.location.href = loginUrl;
                         }
                     });
                 }
 
                 if (loginBtn) {
                     loginBtn.addEventListener('click', function () {
-                        window.location.href = 'login.html?t=' + new Date().getTime();
+                        if (window.clearHistory) window.clearHistory(); // Clear chat history
+                        const loginUrl = window.location.origin + '/login.html?t=' + new Date().getTime();
+                        window.location.href = loginUrl;
                     });
                 }
             }
@@ -129,7 +132,8 @@
             const storedLoginTime = localStorage.getItem('login_time');
 
             if (!storedUserType || !storedLoginTime) {
-                window.location.href = 'login.html?t=' + new Date().getTime();
+                const loginUrl = window.location.origin + '/login.html?t=' + new Date().getTime();
+                window.location.href = loginUrl;
                 return false;
             }
 

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - AI Shop Assistant</title>
+    <link rel="icon" href="assets/bot-logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -191,8 +192,8 @@
 
 <body>
     <div class="login-container">
-        <div class="logo">
-            <i class="fas fa-shopping-bag"></i>
+        <div class="logo" style="background: none; overflow: hidden;">
+            <img src="assets/bot-logo.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
         <h1>AI Shop Assistant</h1>
         <p class="subtitle">Tìm kiếm cửa hàng gần bạn với AI</p>
@@ -220,9 +221,42 @@
     </div>
 
     <script>
-        const ZALO_APP_ID = '1479536407879002042'; // User's App ID
-        const REDIRECT_URI = 'http://127.0.0.1:8000/zalo_callback.html';
+        // Config object initialization
+        let config = {
+            ZALO_APP_ID: "",
+            REDIRECT_URI: ""
+        };
+
         const STATE = Math.random().toString(36).substring(7);
+
+        // Fetch Config from Backend
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                const data = await res.json();
+                config.ZALO_APP_ID = data.zalo_app_id;
+
+                // FIX: Dynamic Redirect URI to prevent Cross-Origin localStorage loss
+                // If backend gives 'http://127.0.0.1:8000/auth...', we replace host with current window.location.origin
+                try {
+                    const backendUri = new URL(data.zalo_redirect_uri);
+                    const currentOrigin = window.location.origin;
+                    // Reconstruct: Current Origin + Backend Path
+                    config.REDIRECT_URI = `${currentOrigin}${backendUri.pathname}`;
+                } catch (e) {
+                    console.error("Error parsing redirect URI:", e);
+                    config.REDIRECT_URI = data.zalo_redirect_uri; // Fallback
+                }
+
+                console.log("Config loaded:", config);
+            } catch (error) {
+                console.error("Failed to load config:", error);
+                alert("Lỗi kết nối Server! Vui lòng F5 lại trang.");
+            }
+        }
+
+        // Load immediately
+        loadConfig();
 
         // Generate code_verifier (43 characters, alphanumeric) for PKCE
         function generateCodeVerifier() {
@@ -246,6 +280,11 @@
         }
 
         document.getElementById('zaloLoginBtn').addEventListener('click', async function () {
+            if (!config.ZALO_APP_ID) {
+                await loadConfig();
+                if (!config.ZALO_APP_ID) return;
+            }
+
             // Clear existing session data to prevent 'Guest' mode sticking
             localStorage.removeItem('user_type');
             localStorage.removeItem('user_name');
@@ -263,13 +302,20 @@
             localStorage.setItem('zalo_code_verifier', codeVerifier);
 
             // Build Zalo OAuth V4 URL WITH PKCE
-            // Correct parameters: app_id, redirect_uri, code_challenge, state
-            const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${ZALO_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge=${codeChallenge}&state=${STATE}`;
+            const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${config.ZALO_APP_ID}&redirect_uri=${encodeURIComponent(config.REDIRECT_URI)}&code_challenge=${codeChallenge}&state=${STATE}`;
 
             document.getElementById('loading').classList.add('active');
 
-            // Redirect to Zalo OAuth
-            window.location.href = zaloAuthUrl;
+            // Force storage commit/wait slightly before redirect to prevent race condition
+            setTimeout(() => {
+                // Double check storage before flying
+                if (!localStorage.getItem('zalo_code_verifier')) {
+                    document.getElementById('loading').classList.remove('active');
+                    alert("Lỗi lưu dữ liệu trình duyệt! Vui lòng tắt chế độ ẩn danh hoặc thử lại.");
+                    return;
+                }
+                window.location.href = zaloAuthUrl;
+            }, 500); // Increased to 500ms for stability
         });
 
         document.getElementById('guestBtn').addEventListener('click', function () {

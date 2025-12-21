@@ -111,6 +111,9 @@ async def get_ai_response(user_message: str, stores_info: list[dict] | None, sea
             )
         prompt += f"Context: {context}\n\nUser Query: {user_message}.\n\n"
         
+        # Add explicit instruction for links
+        prompt += "QUAN TRỌNG: Khi trả về link sản phẩm hoặc link xem chi tiết, hãy dùng thẻ HTML <a href='...' target='_self'>...</a> thay vì markdown [ ](...) để đảm bảo link mở trong tab hiện tại.\n"
+        
         if match_type == 'product':
             prompt += "Chỉ dẫn:\n1. Người dùng tìm đúng sản phẩm có trong Context. Hãy báo tin vui và mời họ đến.\n2. Liệt kê các sản phẩm cụ thể có giá (nếu có)."
         elif match_type == 'category':
