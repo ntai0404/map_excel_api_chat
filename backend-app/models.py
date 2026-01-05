@@ -10,6 +10,7 @@ class ProductInfo(BaseModel):
     price: str
     image_url: str = ""
     link: str = ""
+    staff_zalo: str | None = None
 
 class StoreInfo(BaseModel):
     name: str

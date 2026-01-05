@@ -202,11 +202,28 @@ def clean_html_for_chatbox_redirect(html_content: str, product_id: str) -> str:
             setInterval(hijackBuyButtons, 1000);
         });
         document.addEventListener('DOMContentLoaded', hijackBuyButtons);
+        
+        // FIX: Handle bfcache (Back button issue)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                 hijackBuyButtons();
+                 blockNavigationLinks();
+            }
+        });
 
     })();
     </script>
     
     <style>
+    /* PRIORITY: Hide Dropbuy Logo */
+    img[src*="logo"], img[alt="Logo"], .logo-wrapper img {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }

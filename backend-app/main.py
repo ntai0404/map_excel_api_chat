@@ -167,6 +167,20 @@ async def startup_event():
     # Load Data
     stores_dataframe, products_dataframe, unique_categories = load_stores_data()
     
+    # DEBUG: Check Staff Zalo Data Quality
+    if not products_dataframe.empty:
+        # Check if 'Link NV' column exists in any form
+        link_nv_cols = [c for c in products_dataframe.columns if 'link nv' in str(c).lower()]
+        print(f"DEBUG: Found 'Link NV' columns: {link_nv_cols}")
+        
+        if link_nv_cols:
+            count = products_dataframe[link_nv_cols[0]].notna().sum()
+            print(f"DEBUG: Products with 'Link NV' populated: {count} / {len(products_dataframe)}")
+            # Print sample
+            sample = products_dataframe[products_dataframe[link_nv_cols[0]].notna()].head(1)
+            if not sample.empty:
+                print(f"DEBUG: Sample Link NV: {sample[link_nv_cols[0]].iloc[0]}")
+    
     if not stores_dataframe.empty:
         logger.info(f"Loaded {len(stores_dataframe)} stores.")
         logger.info(f"Unique Categories: {len(unique_categories)}")
@@ -202,8 +216,13 @@ async def chat_with_ai(request: ChatRequest):
     search_intent = await extract_search_intent(user_message, unique_categories)
     logger.info(f"Intent: {search_intent}")
     
-    is_location_req = search_intent.get('is_location_request', False)
-    is_general_inquiry = search_intent.get('is_general_inquiry', False)
+    if search_intent:
+        is_location_req = search_intent.get('is_location_request', False)
+        is_general_inquiry = search_intent.get('is_general_inquiry', False)
+    else:
+        # Fallback if AI fails
+        is_location_req = False
+        is_general_inquiry = False
     
     # Handle General Inquiry
     if is_general_inquiry:
@@ -222,6 +241,10 @@ async def chat_with_ai(request: ChatRequest):
         return ChatResponse(reply="Đang xác định vị trí...", nearest_stores=[], trigger_location=True)
     
     # 2. PRODUCT SEARCH
+    if search_intent is None:
+        logger.warning("Search Intent is None (AI Limit/Error). Defaulting to empty dict.")
+        search_intent = {}
+
     category_name = search_intent.get('category')
     
     # FALLBACK: No Category -> Regex Search All
@@ -432,6 +455,32 @@ async def chat_with_ai(request: ChatRequest):
 # For this immediate step, I included logic inline above for safety or stub placeholders if I can't guarantee variable context.
 # To ensure minimal breakage, I will actually keep the complex logic inline but cleaner as shown above.
 
+def extract_staff_zalo(row):
+    """Helper to extract and clean staff Zalo phone from row"""
+    # 1. Try exact column 'Link NV'
+    val = row.get('Link NV')
+    
+    # 2. Key Fallback: case-insensitive search if exact fails
+    if pd.isna(val):
+        for col in row.index:
+            if str(col).strip().lower() == 'link nv':
+                val = row[col]
+                break
+    
+    if pd.isna(val): return None
+        
+    s_val = str(val).strip()
+    # Remove non-digit characters just in case (optional, but safer)
+    import re
+    s_val = re.sub(r'[^0-9]', '', s_val)
+    
+    # Logic: If missing leading zero (e.g. 987...) -> Add '0'
+    if len(s_val) == 9:
+        s_val = '0' + s_val
+        
+    return s_val if s_val else None
+
+
 async def build_response_from_products(matched_df, lat, lng, msg, intent, type):
     """Helper to build response when we have a list of matching products"""
     shop_ids = matched_df['ID Shop'].unique()
@@ -447,7 +496,8 @@ async def build_response_from_products(matched_df, lat, lng, msg, intent, type):
                 name=str(r.get('Tên sản phẩm', '')),
                 price=str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ",
                 image_url=str(r.get('Link ảnh', '')) if pd.notna(r.get('Link ảnh')) else "",
-                link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else "")
+                link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else ""),
+                staff_zalo=extract_staff_zalo(r)
             ))
         resp_list.append(StoreInfo(
             name=store['store_name'], address=store['address'], lat=store['latitude'], lng=store['longitude'],
@@ -469,7 +519,8 @@ async def build_category_response(cat_shops, cat_prods_df, lat, lng, msg, intent
                 name=str(r.get('Tên sản phẩm', '')),
                 price=str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ",
                 image_url=str(r.get('Link ảnh', '')) if pd.notna(r.get('Link ảnh')) else "",
-                link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else "")
+                link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else ""),
+                staff_zalo=extract_staff_zalo(r)
             ))
         resp_list.append(StoreInfo(
             name=store['store_name'], address=store['address'], lat=store['latitude'], lng=store['longitude'],
@@ -585,9 +636,23 @@ async def get_product_info_api(product_id: str):
         # Since we don't have a direct ID column, we use the Link pattern.
         
         # Faster approach: Filter by Link containing _p{product_id}
-        mask = products_dataframe['Link sản phẩm'].str.contains(f'_p{product_id}', na=False)
+        # Updated Logic: Try multiple patterns
+        s_id = str(product_id).strip()
+        
+        # 1. Standard: _p{id}
+        mask = products_dataframe['Link sản phẩm'].str.contains(f'_p{s_id}', na=False)
         matched_products = products_dataframe[mask]
         
+        # 2. Fallback: -p{id} (common in some platforms)
+        if matched_products.empty:
+             mask = products_dataframe['Link sản phẩm'].str.contains(f'-p{s_id}', na=False)
+             matched_products = products_dataframe[mask]
+             
+        # 3. Fallback: Just ID (if len > 4 to avoid false positives)
+        if matched_products.empty and len(s_id) > 4:
+             mask = products_dataframe['Link sản phẩm'].str.contains(s_id, na=False)
+             matched_products = products_dataframe[mask]
+
         if matched_products.empty:
              return {"error": "Product not found"}
              
@@ -629,7 +694,7 @@ async def get_product_info_api(product_id: str):
                 shop_row = shop_match.iloc[0]
                 
                 # Update info from master store record
-                found_name = shop_row.get('store_name', '')
+                found_name = shop_row.get('store_name')
                 if pd.notna(found_name) and str(found_name).strip():
                     shop_name = str(found_name).strip()
 
@@ -660,15 +725,19 @@ async def get_product_info_api(product_id: str):
                             print(f"DEBUG: Found Zalo in column {col}: '{shop_zalo}'")
                             break
                         
+        # EXTRACT STAFF ZALO (Link NV)
+        raw_staff_zalo = extract_staff_zalo(product)
+        
         return {
             "product_name": product.get('Tên sản phẩm', 'Sản phẩm'),
             "price": str(product.get('Giá niêm yết', '')) if pd.notna(product.get('Giá niêm yết', '')) else "Liên hệ",
             "shop_name": shop_name,
-            "zalo_link": shop_zalo
+            "zalo_link": shop_zalo,
+            "staff_zalo": raw_staff_zalo
         }
     except Exception as e:
-        logger.error(f"Error getting product info: {e}")
-        return {"error": "Internal server error fetching product info"}
+        logger.error(f"Error fetching product info for {product_id}: {e}")
+        return {"error": f"Internal server error: {str(e)}"}
 @app.get("/api/config")
 async def get_frontend_config():
     """

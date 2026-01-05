@@ -1,3 +1,38 @@
+// DUAL ACTION: Join Group + Chat with Admin/Staff
+// Global function to be accessible by onclick handlers
+function handleDualZaloAction(groupLink, productName, staffZalo) {
+    // 1. Prepare Admin Chat Link (Deep Link)
+    // If staffZalo is provided (from Link NV), use it. Otherwise placeholder or skip.
+    // If staffZalo is missing or invalid, we prioritize Group Link only.
+
+    let adminChatLink = "";
+
+    if (staffZalo && staffZalo.length > 8) {
+        const msg = encodeURIComponent(`Chào bạn, tôi quan tâm sản phẩm: ${productName}. Nhờ hỗ trợ!`);
+        adminChatLink = `https://zalo.me/${staffZalo}?text=${msg}`;
+    }
+
+    // DEBUG: Log to Console only (User Request)
+    console.log("Dual Action Debug:", { groupLink, staffZalo, adminChatLink });
+
+    // SEQUENCING FOR UX (User Verified):
+    // 1. Open Group Link (Background Context)
+    const win1 = window.open(groupLink, '_blank');
+
+    // 2. Open Staff Chat (Foreground Action)
+    if (adminChatLink) {
+        // Try opening second tab
+        const win2 = window.open(adminChatLink, '_blank');
+
+        if (!win2 || win2.closed || typeof win2.closed == 'undefined') {
+            renderMessage('ai', '⚠️ <b>LỖI CHẶN POP-UP!</b><br>Máy tính đã chặn cửa sổ Chat Nhân Viên. Vui lòng bấm vào icon [Pop-up] trên thanh địa chỉ và chọn "Always Allow" (Luôn cho phép).', true);
+        } else {
+            console.log("Dual Action: Group -> Staff Chat (Success)");
+        }
+    } else {
+        renderMessage('ai', '⚠️ <b>LỖI DỮ LIỆU:</b> Không tìm thấy số Zalo nhân viên (Link NV).', true);
+    }
+}
 
 let map;
 let userMarker;
@@ -316,7 +351,8 @@ async function fetchAIResponse(userMessage, userLocation) {
                     description: store.address,
                     distance_km: store.distance_km,  // Add distance
                     zalo_group_link: store.zalo_group_link,
-                    products: store.products || []
+                    products: store.products || [],
+                    staff_zalo: store.staff_zalo || '' // Add staff Zalo ID
                 });
             });
         }
@@ -448,7 +484,7 @@ function renderStoreCards(stores, save = true) {
             ` : ''}
 
             ${store.zalo_group_link ?
-                `<a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" onclick="event.stopPropagation()">💬 Tham gia nhóm Zalo</a>`
+                `<br><button onclick="handleDualZaloAction('${store.zalo_group_link}', '${store.products.length > 0 ? store.products[0].name.replace(/'/g, "\\'") : 'Sản phẩm'}', '${store.staff_zalo || ''}')" class="zalo-btn">💬 Tham gia nhóm & Chat</button>`
                 : ''}
         `;
         storeListHtml.appendChild(card);
@@ -574,8 +610,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const productId = urlParams.get('product_interest');
     const productName = urlParams.get('product_name');
     const zaloFromUrl = urlParams.get('zalo'); // PERSISTENCE FROM PROXY
+    const staffZaloFromUrl = urlParams.get('staff_zalo'); // PERSISTENCE FROM PROXY
 
-    console.log("DEBUG: Init Params - ID:", productId, "Name:", productName, "Zalo:", zaloFromUrl);
+    console.log("DEBUG: Init Params - ID:", productId, "Name:", productName, "Zalo:", zaloFromUrl, "Staff Zalo:", staffZaloFromUrl);
 
     // FIX: Clean corrupted avatar from localStorage if present
     const userPic = localStorage.getItem('user_picture');
@@ -601,13 +638,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const systemMessage = `[Hệ thống ghi nhận user **${userName}** đang quan tâm sản phẩm: **${decodedName}**]`;
         appendMessage('ai', systemMessage);
 
-        // OPTIMIZATION: If Zalo link preserved from Proxy, show immediately!
-        // Use strict check and raw HTML to bypass Markdown issues
-        if (zaloFromUrl && zaloFromUrl !== "undefined" && zaloFromUrl !== "null" && zaloFromUrl.startsWith('http')) {
+        // Note: Global function handleDualZaloAction defined at top of file
+
+        // OPTIMIZATION: Use URL params ONLY if we have BOTH Link Group AND Link Staff
+        // This prevents the "NULL" Staff ID issue if the URL is old/incomplete
+        if (zaloFromUrl && zaloFromUrl.includes('http') && staffZaloFromUrl && staffZaloFromUrl.length > 5) {
             const safeLink = zaloFromUrl.trim();
-            // Use Raw HTML to ensure link works
-            appendMessage('ai', `Bấm vào link Zalo bên dưới để chat với shop ngay! 👇<br><br><a href="${safeLink}" target="_blank" style="color: #0068FF; font-weight: bold; text-decoration: underline;">Kết nối Zalo</a>`);
-            return; // Skip API call
+            const safeStaffZalo = staffZaloFromUrl.trim();
+            const productContext = decodedName || "Sản phẩm";
+
+            const msg = encodeURIComponent(`Chào bạn, tôi quan tâm sản phẩm: ${productContext}. Nhờ hỗ trợ!`);
+            const staffLink = safeStaffZalo ? `https://zalo.me/${safeStaffZalo}?text=${msg}` : "";
+
+            let buttonsHtml = `<div>Bấm vào link bên dưới để kết nối:</div>`;
+
+            // Button 1: Chat with Staff (Priority)
+            if (staffLink) {
+                buttonsHtml += `<a href="${staffLink}" target="_blank" style="display: block; text-align: center; margin-top: 10px; padding: 8px 16px; background: #0068ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">💬 Chat Trực Tiếp (NV)</a>`;
+            }
+
+            // Button 2: Join Group (Secondary)
+            if (safeLink) {
+                buttonsHtml += `<a href="${safeLink}" target="_blank" style="display: block; text-align: center; margin-top: 5px; padding: 8px 16px; background: #e0e0e0; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold;">📢 Vào Nhóm Săn Sale</a>`;
+            }
+
+            appendMessage('ai', buttonsHtml);
+            return;
         }
 
         const statusMsg = renderMessage('ai', '<div class="typing-indicator">Đang lấy thông tin shop...</div>', false);
@@ -636,7 +692,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (finalZalo) {
-                        appendMessage('ai', `Bấm vào link Zalo bên dưới để chat với shop **${shopDisplay}** ngay! 👇\n\n[Kết nối Zalo](${finalZalo})`);
+                        // Use Dual Action Button instead of Markdown Link
+                        const safeStaff = data.staff_zalo || '';
+                        const pName = data.name || "Sản phẩm";
+
+                        const msg = encodeURIComponent(`Chào bạn, tôi quan tâm sản phẩm: ${pName}. Nhờ hỗ trợ!`);
+                        const staffLink = safeStaff ? `https://zalo.me/${safeStaff}?text=${msg}` : "";
+
+                        let buttonsHtml = `<div>Kết nối với shop <b>${shopDisplay}</b>:</div>`;
+
+                        // Button 1: Chat with Staff (Priority)
+                        if (staffLink) {
+                            buttonsHtml += `<a href="${staffLink}" target="_blank" style="display: block; text-align: center; margin-top: 10px; padding: 8px 16px; background: #0068ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">💬 Chat Trực Tiếp (NV)</a>`;
+                        } else {
+                            buttonsHtml += `<div style="color: red; font-size: 12px; margin-top: 5px;">* Chưa có liên hệ nhân viên</div>`;
+                        }
+
+                        // Button 2: Join Group (Secondary)
+                        if (finalZalo) {
+                            buttonsHtml += `<a href="${finalZalo}" target="_blank" style="display: block; text-align: center; margin-top: 5px; padding: 8px 16px; background: #e0e0e0; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold;">📢 Vào Nhóm Săn Sale</a>`;
+                        }
+
+                        appendMessage('ai', buttonsHtml);
                     } else {
                         appendMessage('ai', `Cửa hàng **${shopDisplay}** hiện chưa cập nhật link Zalo. Bạn có muốn nhắn tin hỏi shop không?`);
                     }
