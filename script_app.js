@@ -39,6 +39,11 @@ let userMarker;
 let storeMarkers = L.featureGroup();
 let currentUserLocation = null;
 let chatHistory = []; // Global history array
+window.lastSearchTime = Date.now(); // Global context timer
+window.interestedProducts = JSON.parse(localStorage.getItem('interestedProducts') || '[]'); // Accumulate products user is interested in
+function saveInterestedProducts() {
+    localStorage.setItem('interestedProducts', JSON.stringify(window.interestedProducts));
+}
 
 // Icons configuration (Global to avoid re-creation and ensures CDN priority)
 const redIcon = L.icon({
@@ -449,42 +454,57 @@ function renderStoreCards(stores, save = true) {
     const storeListHtml = document.createElement('div');
     storeListHtml.className = 'store-list';
 
+    // UPDATE CONTEXT TIMER
+    window.lastSearchTime = Date.now();
+
     stores.forEach(store => {
         const card = document.createElement('div');
         card.className = 'store-card';
         card.onclick = () => focusOnStore(store.lat, store.lng, store.name);
         card.style.cursor = 'pointer';
 
+        // Use first product name from filtered results
+        const interestName = (store.products && store.products.length > 0) ? store.products[0].name : store.name;
+
         card.innerHTML = `
             <div class="store-name">${store.name}</div>
-            <div class="store-address">${store.description}</div>
+            <div class="store-address">${store.description || store.address || ''}</div>
             <div class="store-distance">📏 Cách bạn: ${store.distance_km ? store.distance_km.toFixed(1) : '?'} km</div>
             
             ${store.products && store.products.length > 0 ? `
                 <div class="product-list">
-                    ${store.products.map(p => {
-            // Inject Zalo link into the proxy URL for persistence
+                    ${store.products.map((p, index) => {
             let finalLink = p.link || '#';
             if (store.zalo_group_link && finalLink !== '#') {
                 const separator = finalLink.includes('?') ? '&' : '?';
-                finalLink += `${separator}zalo=${encodeURIComponent(store.zalo_group_link)}`;
+                finalLink += `${separator}zalo=${encodeURIComponent(store.zalo_group_link)}&product_name=${encodeURIComponent(p.name)}`;
+            } else if (finalLink !== '#') {
+                const separator = finalLink.includes('?') ? '&' : '?';
+                finalLink += `${separator}product_name=${encodeURIComponent(p.name)}`;
             }
+
+            const isHidden = index >= 3 ? 'display:none;' : '';
+            const hiddenClass = index >= 3 ? 'hidden-product' : '';
+
             return `
-                        <div class="product-item">
+                        <div class="product-item ${hiddenClass}" style="${isHidden}">
                             <img src="${p.image_url || 'https://via.placeholder.com/120'}" class="product-img" onerror="this.src='https://via.placeholder.com/120?text=No+Image'">
                             <div class="product-info">
                                 <div class="product-name" title="${p.name}">${p.name}</div>
                                 <div class="product-price">${p.price}</div>
                                 <a href="${finalLink}" target="_self" class="product-link-btn" onclick="event.stopPropagation()">🔗 Xem sản phẩm</a>
                             </div>
-                        </div>
-                        `;
+                        </div>`;
         }).join('')}
+                    
+                    ${store.products.length > 3 ?
+                    `<button class="see-more-btn" style="width:100%; margin-top:5px; padding:5px; background:#f0f0f0; border:1px solid #ddd; cursor:pointer;" onclick="revealNextBatch(this)">Xem thêm (${store.products.length - 3} sản phẩm)</button>`
+                    : ''}
                 </div>
             ` : ''}
 
             ${store.zalo_group_link ?
-                `<br><button onclick="handleDualZaloAction('${store.zalo_group_link}', '${store.products.length > 0 ? store.products[0].name.replace(/'/g, "\\'") : 'Sản phẩm'}', '${store.staff_zalo || ''}')" class="zalo-btn">💬 Tham gia nhóm & Chat</button>`
+                `<br><a href="${store.zalo_group_link}" target="_blank" class="zalo-btn" style="display:inline-block; text-decoration:none; text-align:center;" onclick="trackInterest(event, '${safeEncode(store.name)}', '${safeEncode(store.zalo_group_link)}', '${safeEncode(interestName)}')">📢 Tham gia nhóm săn sale</a>`
                 : ''}
         `;
         storeListHtml.appendChild(card);
@@ -540,7 +560,7 @@ async function handleLocationCheck(isAutoTriggered = false) {
             // Updated logic: ALWAYS silent for auto-trigger (as requested by user)
             // Manual click (!isAutoTriggered) still shows feedback
             if (!isAutoTriggered) {
-                renderMessage('ai', `Đã xác định được vị trí của bạn: Lat ${location.lat}, Lng ${location.lng}. Tôi có thể giúp bạn tìm gì gần đây?`, true);
+                renderMessage('ai', `Đã xác định được vị trí của bạn: Lat ${location.lat}, Lng ${location.lng}.Tôi có thể giúp bạn tìm gì gần đây ? `, true);
             }
             // Still mark resolved so we don't nag
             sessionStorage.setItem('locationResolved', 'true');
@@ -632,11 +652,26 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('productProcessed_' + productId, 'true');
 
         const decodedName = decodeURIComponent(productName);
+
+        // Store in global for Lead Form to use
+        window.currentProductContext = decodedName;
+
         const userName = localStorage.getItem('user_name') || 'Khách';
 
         // Restore format: [Hệ thống ghi nhận user **Nguyễn Xuân Tài** đang quan tâm sản phẩm: **Tên SP**]
-        const systemMessage = `[Hệ thống ghi nhận user **${userName}** đang quan tâm sản phẩm: **${decodedName}**]`;
+        const systemMessage = `[Hệ thống ghi nhận user ** ${userName} ** đang quan tâm sản phẩm: ** ${decodedName} **]`;
         appendMessage('ai', systemMessage);
+
+        // ADD TO ACCUMULATION ARRAY (when user views product)
+        window.interestedProducts.push({
+            shopName: '', // Will be filled from API call below
+            groupLink: zaloFromUrl || '',
+            productName: decodedName,
+            timestamp: new Date().toLocaleString(),
+            sent: false // Tracking flag
+        });
+        saveInterestedProducts();
+        console.log(`✅ Added to interest list: ${decodedName} (Total: ${window.interestedProducts.length})`);
 
         // Note: Global function handleDualZaloAction defined at top of file
 
@@ -647,15 +682,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const safeStaffZalo = staffZaloFromUrl.trim();
             const productContext = decodedName || "Sản phẩm";
 
-            const msg = encodeURIComponent(`Chào bạn, tôi quan tâm sản phẩm: ${productContext}. Nhờ hỗ trợ!`);
+            const msg = encodeURIComponent(`Chào bạn, tôi quan tâm sản phẩm: ${productContext}.Nhờ hỗ trợ!`);
             const staffLink = safeStaffZalo ? `https://zalo.me/${safeStaffZalo}?text=${msg}` : "";
 
             let buttonsHtml = `<div>Bấm vào link bên dưới để kết nối:</div>`;
 
-            // Button 1: Chat with Staff (Priority)
-            if (staffLink) {
-                buttonsHtml += `<a href="${staffLink}" target="_blank" style="display: block; text-align: center; margin-top: 10px; padding: 8px 16px; background: #0068ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">💬 Chat Trực Tiếp (NV)</a>`;
-            }
+            // Button 1: Chat with Staff (REMOVED per user request)
+
 
             // Button 2: Join Group (Secondary)
             if (safeLink) {
@@ -677,6 +710,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data && !data.error) {
                     const shopDisplay = data.shop_name || "Cửa hàng";
 
+                    // UPDATE shop name in accumulated products (match by product name)
+                    if (window.interestedProducts.length > 0) {
+                        // Find the product that matches this API call's product name
+                        const matchingProduct = window.interestedProducts.find(p =>
+                            p.productName === decodedName && p.shopName === ''
+                        );
+
+                        if (matchingProduct) {
+                            matchingProduct.shopName = shopDisplay;
+                            saveInterestedProducts();
+                            console.log(`📝 Updated shop name for "${decodedName}": ${shopDisplay}`);
+                        }
+                    }
+
+                    // UPDATE CONTEXT TIMER
+                    window.lastSearchTime = Date.now();
+
                     // FIX: Strict type coercion to prevent [object Object]
                     let finalZalo = "";
                     if (data.zalo_link) {
@@ -694,23 +744,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (finalZalo) {
                         // Use Dual Action Button instead of Markdown Link
                         const safeStaff = data.staff_zalo || '';
-                        const pName = data.name || "Sản phẩm";
+                        const pName = data.product_name || data.name || "Sản phẩm";
 
                         const msg = encodeURIComponent(`Chào bạn, tôi quan tâm sản phẩm: ${pName}. Nhờ hỗ trợ!`);
                         const staffLink = safeStaff ? `https://zalo.me/${safeStaff}?text=${msg}` : "";
 
                         let buttonsHtml = `<div>Kết nối với shop <b>${shopDisplay}</b>:</div>`;
 
-                        // Button 1: Chat with Staff (Priority)
-                        if (staffLink) {
-                            buttonsHtml += `<a href="${staffLink}" target="_blank" style="display: block; text-align: center; margin-top: 10px; padding: 8px 16px; background: #0068ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">💬 Chat Trực Tiếp (NV)</a>`;
-                        } else {
-                            buttonsHtml += `<div style="color: red; font-size: 12px; margin-top: 5px;">* Chưa có liên hệ nhân viên</div>`;
-                        }
+                        // Button 1: Chat with Staff (REMOVED per user request)
+
 
                         // Button 2: Join Group (Secondary)
                         if (finalZalo) {
-                            buttonsHtml += `<a href="${finalZalo}" target="_blank" style="display: block; text-align: center; margin-top: 5px; padding: 8px 16px; background: #e0e0e0; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold;">📢 Vào Nhóm Săn Sale</a>`;
+                            buttonsHtml += `<a href="${finalZalo}" target="_blank" style="display: block; text-align: center; margin-top: 5px; padding: 8px 16px; background: #e0e0e0; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold;" onclick="trackInterest(event, '${safeEncode(shopDisplay)}', '${safeEncode(finalZalo)}', '${safeEncode(pName)}')">📢 Vào Nhóm Săn Sale</a>`;
                         }
 
                         appendMessage('ai', buttonsHtml);
@@ -737,3 +783,270 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("Chat initialized V3.8");
 });
+
+// Reset persistence only on logout if needed (optional, keeping current localStorage behavior)
+window.addEventListener('beforeunload', () => {
+    // We NO LONGER clear interestedProducts here to allow navigation persistence
+    // Data is stored in localStorage to survive tab closure/crashes
+    console.log("💾 Maximum Persistence active: interestedProducts preserved in localStorage.");
+});
+
+// --- Helper for Product Pagination ---
+function revealNextBatch(btn) {
+    const productList = btn.parentElement;
+    const hiddenItems = productList.querySelectorAll('.product-item.hidden-product');
+
+    // Convert to array to slice
+    const itemsToReveal = Array.from(hiddenItems).slice(0, 3);
+
+    itemsToReveal.forEach(item => {
+        item.style.display = ''; // Reset display to default (block/flex)
+        item.classList.remove('hidden-product');
+    });
+
+    // Check remaining hidden items
+    const remaining = hiddenItems.length - itemsToReveal.length;
+
+    if (remaining > 0) {
+        btn.innerText = `Xem thêm (${remaining} sản phẩm)`;
+    } else {
+        btn.style.display = 'none'; // Hide button if no more items
+    }
+}
+
+// --- LEAD GENERATION TRACKING WITH POPUP ---
+let pendingLeadData = null; // Store data while waiting for phone input
+
+// 1. Inject Modal HTML into DOM
+function injectPhoneModal() {
+    const modalHtml = `
+    <!-- Bootstrap Modal for Phone Input -->
+    <div class="modal fade" id="phoneInputModal" tabindex="-1" aria-labelledby="phoneModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h5 class="modal-title" id="phoneModalLabel">🎁 Tham gia nhóm săn sale</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="confirmLead('exit')"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-gift fa-3x text-warning mb-3"></i>
+                        <p class="fs-5 fw-bold" style="color: #333;">Để lại SĐT để được Admins hỗ trợ rieng nhé!</p>
+                        <p class="text-muted small">Chúng tôi sẽ add bạn vào nhóm Zalo VIP & Gửi mã giảm giá.</p>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="tel" class="form-control" id="userPhoneInput" placeholder="Số điện thoại của bạn" style="border-radius: 10px;">
+                        <label for="userPhoneInput">Nhập số điện thoại (Zalo)</label>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between border-0 pb-4">
+                    <button type="button" class="btn btn-outline-secondary px-3" style="border-radius: 20px;" onclick="confirmLead('exit')">
+                        ❌ Thoát
+                    </button>
+                    <button type="button" class="btn btn-outline-primary px-3" style="border-radius: 20px;" onclick="confirmLead('skip')">
+                        ⏩ Không cần
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold" style="border-radius: 20px; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); border: none;" onclick="confirmLead('submit')">
+                        Xác nhận & Vào nhóm 🚀
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Ensure Modal is injected on load
+document.addEventListener('DOMContentLoaded', () => {
+    injectPhoneModal();
+});
+
+// 2. Main Entry Point: Triggered by Button Click
+function trackInterest(event, shopNameEncoded, groupLinkEncoded, productNameEncoded) {
+    if (event) event.preventDefault(); // Stop immediate navigation
+
+    // Decode Data
+    const shopName = decodeURIComponent(shopNameEncoded);
+    const groupLink = decodeURIComponent(groupLinkEncoded);
+    let productName = decodeURIComponent(productNameEncoded);
+
+    // FIX: If productName is generic "Sản phẩm", try to find real name from array
+    if (productName === "Sản phẩm" || productName === shopName) {
+        // Search from newest to oldest, prioritizing NOT SENT items
+        const candidate = [...window.interestedProducts].reverse().find(p =>
+            p.shopName === shopName && !p.sent
+        ) || [...window.interestedProducts].reverse().find(p => p.shopName === shopName);
+
+        if (candidate && candidate.productName !== "Sản phẩm") {
+            productName = candidate.productName;
+            console.log(`🔄 Resolved "${shopName}" -> "${productName}" (Recent Priority)`);
+        }
+    }
+
+    // ADD TO ACCUMULATION (for direct "Join Group" clicks without viewing product detail)
+    // Check if already exists
+    const existingIndex = window.interestedProducts.findIndex(p =>
+        p.productName === productName
+    );
+
+    if (existingIndex === -1) {
+        // New product
+        window.interestedProducts.push({
+            shopName,
+            groupLink,
+            productName,
+            timestamp: new Date().toLocaleString(),
+            sent: false // Tracking flag
+        });
+        saveInterestedProducts();
+        console.log(`✅ Added to interest list: ${productName} (Total: ${window.interestedProducts.length})`);
+    } else {
+        const product = window.interestedProducts[existingIndex];
+        if (product.sent) {
+            // User wants to interest again - Re-activate!
+            product.sent = false;
+            product.timestamp = new Date().toLocaleString();
+            saveInterestedProducts();
+            console.log(`🔄 Re-activated interest for: ${productName}`);
+        } else {
+            console.log(`⚠️ Product already in queue: ${productName}`);
+        }
+    }
+
+    // Save to global for Modal callback
+    pendingLeadData = {
+        shopName,
+        groupLink,
+        productName
+    };
+
+    // CHECK FOR PERSISTED PHONE - To avoid repeating modal on mobile UX
+    const storedPhone = localStorage.getItem('user_phone');
+    if (storedPhone && storedPhone !== "None") {
+        console.log("📱 Using stored phone:", storedPhone);
+        submitLeadPayload(storedPhone);
+        return;
+    }
+
+    // Show Modal
+    const modalEl = document.getElementById('phoneInputModal');
+    if (typeof bootstrap !== 'undefined' && modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    } else {
+        // Fallback if Bootstrap not loaded: proceed without phone
+        console.warn("Bootstrap Modal not found, skipping phone input.");
+        submitLeadPayload(null);
+    }
+}
+
+// 3. User Decision Handler (Submit or Skip or Exit)
+function confirmLead(action) {
+    const modalEl = document.getElementById('phoneInputModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+
+    // ACTION 1: Exit - Close modal and do nothing
+    if (action === 'exit') {
+        if (modal) modal.hide();
+        console.log("❌ User exited modal");
+        return;
+    }
+
+    // ACTION 2 & 3: Skip or Submit
+    let phone = "None"; // Default
+
+    if (action === 'submit') {
+        const input = document.getElementById('userPhoneInput');
+        if (input && input.value.trim().length > 0) {
+            phone = input.value.trim();
+            localStorage.setItem('user_phone', phone); // PERSIST
+        } else {
+            // User clicked Submit but empty? Alert
+            alert("Vui lòng nhập số điện thoại hoặc chọn 'Không cần'");
+            return; // Stay in modal
+        }
+    }
+
+    // Hide Modal
+    if (modal) modal.hide();
+
+    // Proceed to send data
+    submitLeadPayload(phone);
+}
+
+// 4. Submit Data & Navigate
+async function submitLeadPayload(phone) {
+    if (!pendingLeadData) return;
+
+    const { groupLink } = pendingLeadData;
+
+    // A. Open Group Link (UX Priority - Immediate)
+    window.open(groupLink, '_blank');
+
+    // B. Send ALL accumulated products as separate rows
+    if (window.interestedProducts.length === 0) {
+        console.warn("⚠️ No products in interest list!");
+        return;
+    }
+
+    try {
+        // Collect Context (shared for all products)
+        const contextMsgs = chatHistory.filter(item => {
+            return item.sender === 'user' || item.type === 'trigger';
+        }).slice(-10); // Increase to 10 for better context
+        const contextStr = contextMsgs.map(m => m.text).join(" - ");
+
+        // Only send products that haven't been submitted yet
+        const unsentProducts = window.interestedProducts.filter(p => !p.sent);
+
+        if (unsentProducts.length === 0) {
+            console.log(`ℹ️ All ${window.interestedProducts.length} products already sent previously.`);
+        } else {
+            console.log(`� Submitting ${unsentProducts.length} new products to sheet...`);
+
+            // Send each product as a separate row
+            for (const product of unsentProducts) {
+                const payload = {
+                    user_name: localStorage.getItem('user_name') || "Khách",
+                    user_id: localStorage.getItem('session_id') || "guest",
+                    product_name: product.productName,
+                    shop_name: product.shopName,
+                    chat_context: contextStr || "User clicked Interest",
+                    phone: phone, // Actual Phone or "None"
+                    zalo_contact: phone, // Backward compatibility
+                    avatar_url: localStorage.getItem('user_picture') || "",
+                    zalo_group_link: product.groupLink,
+                    timestamp: product.timestamp
+                };
+
+                // Send API (fire and forget)
+                fetch('/api/submit-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    console.log(`✅ Sent: ${product.productName}`);
+                    product.sent = true; // Mark as sent in memory
+                    saveInterestedProducts(); // Persist the 'sent' state
+                }).catch(e => {
+                    console.error(`❌ Failed: ${product.productName}`, e);
+                });
+            }
+        }
+
+        console.log(`✅ Submission process complete. Array preserved (Total: ${window.interestedProducts.length}).`);
+
+    } catch (e) {
+        console.error("Tracking Error:", e);
+    }
+
+    // Reset
+    pendingLeadData = null;
+    document.getElementById('userPhoneInput').value = ''; // Clear input
+}
+
+function safeEncode(str) {
+    if (!str) return '';
+    return encodeURIComponent(str).replace(/'/g, "%27");
+}

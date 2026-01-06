@@ -6,7 +6,14 @@ import sys
 from services.geo_service import geocode_address, build_address, load_cache
 
 # Google Sheets Configuration
-SPREADSHEET_ID = "1ekdjU2lJK1MnBzwFr3B8ws2E8GnK1omLJNbIU8puXPI"
+PRODUCT_SPREADSHEET_ID = "1ekdjU2lJK1MnBzwFr3B8ws2E8GnK1omLJNbIU8puXPI"
+LEAD_SPREADSHEET_ID = "1DpoiGqwW5DysTFtW7OOYYcL7B8n1Zs4GIpNwAVA6Dys" # New Lead Sheet
+
+# Auth for Writing (Private Sheet)
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+JSON_KEYFILE = 'googlesheet_service_account.json'
+
 
 # All sheet GIDs (product categories)
 SHEET_GIDS = {
@@ -82,7 +89,7 @@ def load_all_products():
     
     for gid, category_name in SHEET_GIDS.items():
         try:
-            csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv&gid={gid}"
+            csv_url = f"https://docs.google.com/spreadsheets/d/{PRODUCT_SPREADSHEET_ID}/export?format=csv&gid={gid}"
             df = pd.read_csv(csv_url)
             
             # Add category if not exists
@@ -93,7 +100,8 @@ def load_all_products():
             print(f"  ✓ {category_name}: {len(df)} products")
             
         except Exception as e:
-            print(f"  ✗ {category_name}: Error - {e}")
+            # print(f"  ✗ {category_name}: Error - {e}") # SILENCED
+            pass
     
     if all_products:
         combined_df = pd.concat(all_products, ignore_index=True)
@@ -204,6 +212,84 @@ def load_stores_data():
     
     return shops_df, products_df, list(SHEET_GIDS.values())
 
+def save_lead(lead_data: dict) -> bool:
+    """
+    Save lead data to Google Sheet 'Leads' (Tab: message).
+    Data format: {timestamp, user_name, user_id, product_name, shop_name, context, zalo_contact, status}
+    """
+    try:
+        # 1. Auth Strategy (Modern gspread)
+        creds_dict = None
+        
+        # Check Env Vars first
+        private_key = os.environ.get("GOOGLE_PRIVATE_KEY")
+        client_email = os.environ.get("GOOGLE_CLIENT_EMAIL")
+        
+        if private_key and client_email:
+            if "\\n" in private_key:
+                private_key = private_key.replace("\\n", "\n")
+                
+            creds_dict = {
+                "type": "service_account",
+                "project_id": os.environ.get("GOOGLE_PROJECT_ID", ""),
+                "private_key_id": os.environ.get("GOOGLE_PRIVATE_KEY_ID", ""),
+                "private_key": private_key,
+                "client_email": client_email,
+                "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "client_x509_cert_url": os.environ.get("GOOGLE_CLIENT_CERT_URL", "")
+            }
+            # Use gspread native auth
+            client = gspread.service_account_from_dict(creds_dict)
+            print("✅ Loaded Credentials from Environment Variables (Modern Auth)")
+            
+        elif os.path.exists(JSON_KEYFILE):
+            # Fallback to local JSON file
+            client = gspread.service_account(filename=JSON_KEYFILE)
+            print("⚠️ Loaded Credentials from local JSON file")
+            
+        else:
+            raise FileNotFoundError("Authentication Failed: No JSON file or .env variables found.")
+
+        # 2. Open Sheet and Tab
+        sheet = client.open_by_key(LEAD_SPREADSHEET_ID)
+        worksheet = sheet.worksheet("message") # USER CONFIRMED TAB NAME IS 'message'
+        
+        # 3. Prepare Row
+        # 3. Prepare Row
+        # Columns: A=Time, B=Name, C=ID, D=Product, E=Shop, F=Context, G=Contact(Phone), H=Avatar, I=Status, J=Zalo Link
+        
+        phone_val = lead_data.get('phone') or lead_data.get('zalo_contact') or ''
+        # If phone is empty/placeholder, try to get from zalo_contact if it has useful info
+        if not phone_val or "Zalo User" in phone_val:
+             phone_val = "Chưa cung cấp"
+
+        row = [
+            lead_data.get('timestamp', ''),
+            lead_data.get('user_name', 'Khách'),
+            lead_data.get('user_id', ''),
+            lead_data.get('product_name', ''),
+            lead_data.get('shop_name', ''),
+            lead_data.get('chat_context', ''),
+            phone_val,                             # Column G: Zalo Contact / Phone
+            lead_data.get('avatar_url', ''),       # Column H: Zalo Image
+            lead_data.get('status', 'New'),        # Column I: Status
+            lead_data.get('zalo_group_link', '')   # Column J: Zalo Link
+        ]
+        
+        # 4. Append
+        worksheet.append_row(row)
+        print(f"✅ Lead saved: {lead_data.get('user_name')} - {phone_val}")
+        return True
+        
+    except Exception as e:
+        import traceback
+        print(f"❌ Error saving lead: {e}")
+        # traceback.print_exc() 
+        return False
+
 if __name__ == '__main__':
     # Test loading
     store_df = load_stores_data()
@@ -211,3 +297,5 @@ if __name__ == '__main__':
         print("\nSample data:")
         print(store_df.head())
         print(f"\nColumns: {list(store_df.columns)}")
+
+save_lead_to_sheet = save_lead

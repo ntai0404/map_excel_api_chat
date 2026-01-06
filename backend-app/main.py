@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -27,8 +28,10 @@ logger.info(f"Loading .env from: {env_path}")
 load_dotenv(env_path, override=True)
 
 # --- IMPORTS AFTER ENV LOAD ---
-from models import ChatRequest, ChatResponse, StoreInfo, ProductInfo
-from services.sheet_service import load_stores_data
+from models import ChatRequest, ChatResponse, StoreInfo, ProductInfo, LeadRequest
+
+from services.sheet_service import load_stores_data, save_lead_to_sheet
+
 from services.geo_service import find_nearest_stores
 from services.ai_service import get_ai_response, extract_search_intent, configure_genai, smart_product_filter
 from services.product_view import get_product_html
@@ -69,21 +72,58 @@ app.add_middleware(
 
 # --- HELPER FUNCTIONS ---
 
-def regex_search_all_products(query: str, limit: int = 3) -> pd.DataFrame:
-    """Search across all products using regex"""
-    if products_dataframe.empty:
-        return pd.DataFrame()
+def regex_search_all_products(query: str, limit: int = 3) -> tuple[pd.DataFrame, bool]:
+    """Search across all products using regex with OR logic and relevance scoring
     
+    Returns:
+        tuple: (matched_products_df, is_fuzzy_match)
+            - is_fuzzy_match=False: Exact phrase match found
+            - is_fuzzy_match=True: Split-term OR search used (may have irrelevant results)
+    """
+    if products_dataframe.empty:
+        return pd.DataFrame(), False
+    
+    # STEP 1: Try EXACT phrase match first
+    exact_match = products_dataframe[
+        products_dataframe['Tên sản phẩm'].str.contains(query, case=False, na=False)
+    ]
+    
+    if not exact_match.empty:
+        logger.info(f"✅ Found {len(exact_match)} products with exact phrase: '{query}'")
+        return exact_match.head(limit), False  # is_fuzzy=False
+    
+    # STEP 2: Fallback to split-term OR logic
+    logger.info(f"⚠️ No exact match for '{query}'. Trying split-term search...")
     search_terms = query.split()
-    mask = pd.Series([True] * len(products_dataframe))
+    
+    # Use OR logic: match products containing ANY term
+    mask = pd.Series([False] * len(products_dataframe))
     
     for term in search_terms:
         term_mask = products_dataframe['Tên sản phẩm'].str.contains(
             term, case=False, na=False
         )
-        mask = mask & term_mask
+        mask = mask | term_mask  # OR logic
     
-    return products_dataframe[mask].head(limit)
+    matched_products = products_dataframe[mask].copy()
+    
+    if matched_products.empty:
+        logger.warning(f"❌ No products found for query: '{query}'")
+        return pd.DataFrame(), True  # is_fuzzy=True (but empty)
+    
+    # Score by number of matching terms (higher = more relevant)
+    def count_matches(product_name):
+        count = 0
+        product_lower = str(product_name).lower()
+        for term in search_terms:
+            if term.lower() in product_lower:
+                count += 1
+        return count
+    
+    matched_products['relevance_score'] = matched_products['Tên sản phẩm'].apply(count_matches)
+    
+    # Sort by relevance (descending) and return top results
+    return matched_products.sort_values('relevance_score', ascending=False).head(limit), True  # is_fuzzy=True
 
 def convert_to_proxy_link(dropbuy_link: str) -> str:
     """
@@ -259,11 +299,18 @@ async def chat_with_ai(request: ChatRequest):
             search_query = search_intent.get('generic_term')
             
         logger.info(f"Regex Search Query: {search_query}")
-        matched = regex_search_all_products(search_query)
+        matched, is_fuzzy = regex_search_all_products(search_query)
         
         if not matched.empty:
-            # Found products via regex
-            return await build_response_from_products(matched, lat, lng, user_message, search_intent, 'product')
+            # Add disclaimer for fuzzy matches
+            if is_fuzzy:
+                fuzzy_disclaimer = "⚠️ Em không tìm thấy chính xác, nhưng có **một số sản phẩm liên quan** anh tham khảo ạ:\n\n"
+                response = await build_response_from_products(matched, lat, lng, user_message, search_intent, 'product')
+                response.reply = fuzzy_disclaimer + response.reply
+                return response
+            else:
+                # Exact match - no disclaimer needed
+                return await build_response_from_products(matched, lat, lng, user_message, search_intent, 'product')
         else:
             return ChatResponse(
                 reply="Rất tiếc, em không tìm thấy sản phẩm phù hợp. Anh/chị vui lòng mô tả chi tiết hơn ạ.",
@@ -509,12 +556,36 @@ async def build_response_from_products(matched_df, lat, lng, msg, intent, type):
     return ChatResponse(reply=ai_reply, nearest_stores=resp_list)
 
 async def build_category_response(cat_shops, cat_prods_df, lat, lng, msg, intent):
+    """
+    Build response for category search, with KEYWORD FILTERING support.
+    If intent has 'product' keyword (e.g. 'quạt'), filter products in category (e.g. 'Điều hòa - Quạt')
+    to only those matching 'quạt'.
+    """
+    
+    # Keyword Filter: "quạt", "điều hòa", etc.
+    filter_keyword = ""
+    if intent.product and len(intent.product) > 2:
+        filter_keyword = intent.product.lower()
+        print(f"🔎 Filtering Category by Keyword: '{filter_keyword}'")
+    
+    # Only keep shops matching category logic (already done in main flow)
+    # But we need to filter PRODUCTS inside those shops
+    
     nearest_data = find_nearest_stores(lat, lng, cat_shops, limit=3)
     resp_list = []
+    
     for store in nearest_data:
+        # Get products of this shop in this category
         s_prods = cat_prods_df[cat_prods_df['ID Shop'].astype(str) == str(store['store_id'])]
+        
+        # Apply Keyword Filter if exists
+        if filter_keyword:
+            # Simple containment check
+            # Exclude strict matches if needed, but 'contains' is safer standard
+            s_prods = s_prods[s_prods['Tên sản phẩm'].astype(str).str.lower().str.contains(filter_keyword, na=False)]
+        
         p_list = []
-        for _, r in s_prods.head(5).iterrows():
+        for _, r in s_prods.head(15).iterrows():
              p_list.append(ProductInfo(
                 name=str(r.get('Tên sản phẩm', '')),
                 price=str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ",
@@ -522,13 +593,22 @@ async def build_category_response(cat_shops, cat_prods_df, lat, lng, msg, intent
                 link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else ""),
                 staff_zalo=extract_staff_zalo(r)
             ))
-        resp_list.append(StoreInfo(
-            name=store['store_name'], address=store['address'], lat=store['latitude'], lng=store['longitude'],
-            distance_km=store['distance_km'], zalo_group_link=store.get('zalo_group_link'), products=p_list
-        ))
+        
+        # Only add shop if it has matching products (after filter)
+        if p_list: 
+            resp_list.append(StoreInfo(
+                name=store['store_name'], address=store['address'], lat=store['latitude'], lng=store['longitude'],
+                distance_km=store['distance_km'], zalo_group_link=store.get('zalo_group_link'), products=p_list
+            ))
     
     rich_data = [s.dict() for s in resp_list]
-    ai_reply = await get_ai_response(msg, rich_data, intent, 'category')
+    
+    # Customize AI Prompt context
+    context_type = 'category'
+    if filter_keyword:
+        context_type = f"category_filtered_{filter_keyword}"
+        
+    ai_reply = await get_ai_response(msg, rich_data, intent, context_type)
     return ChatResponse(reply=ai_reply, nearest_stores=resp_list)
 
 
@@ -738,6 +818,26 @@ async def get_product_info_api(product_id: str):
     except Exception as e:
         logger.error(f"Error fetching product info for {product_id}: {e}")
         return {"error": f"Internal server error: {str(e)}"}
+
+@app.post("/api/submit-lead")
+async def submit_lead(lead: LeadRequest, background_tasks: BackgroundTasks):
+    """
+    Receive lead data and save to Google Sheet in background.
+    """
+    logger.info(f"Received lead for: {lead.product_name} from {lead.user_name}")
+    
+    # Add timestamp if missing
+    if not lead.timestamp:
+        lead.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+    # Convert model to dict
+    lead_data = lead.model_dump()
+    
+    # Run in background
+    background_tasks.add_task(save_lead_to_sheet, lead_data)
+    
+    return {"status": "success", "message": "Lead queued"}
+
 @app.get("/api/config")
 async def get_frontend_config():
     """

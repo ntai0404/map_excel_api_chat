@@ -39,7 +39,7 @@ def get_product_html(product_id: str, product_url: str = None) -> str:
         resp = requests.get(product_url, headers=HEADERS)
         
         if resp.status_code != 200:
-            return f"<h1>Failed to scrape</h1><p>Status: {resp.status_code}</p>"
+            return f"<h1>Failed to scrape</h1><p>Status: {resp.status_code}</p><p>URL: {product_url}</p>"
         
         # Clean and process HTML
         cleaned_html = clean_html_for_chatbox_redirect(resp.text, product_id)
@@ -85,11 +85,15 @@ def clean_html_for_chatbox_redirect(html_content: str, product_id: str) -> str:
         // Robust redirect mechanism
         function redirectToChatbox() {
             var val = getProductInfo();
-            // PERSISTENCE: Check for Zalo link passed from previous screen
+            // PERSISTENCE: Check for Zalo link and product name passed from previous screen
             const currentParams = new URLSearchParams(window.location.search);
             const zaloLink = currentParams.get('zalo');
+            const passedName = currentParams.get('product_name');
             
-            let chatboxUrl = window.location.origin + `/index.html?product_interest=${val.id}&product_name=${encodeURIComponent(val.name)}`;
+            // Priority: URL Name > document.title
+            const finalName = passedName || val.name;
+            
+            let chatboxUrl = window.location.origin + `/index.html?product_interest=${val.id}&product_name=${encodeURIComponent(finalName)}`;
             
             if (zaloLink) {
                  chatboxUrl += `&zalo=${encodeURIComponent(zaloLink)}`;
