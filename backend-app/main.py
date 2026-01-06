@@ -10,7 +10,7 @@ import httpx
 from datetime import datetime, timedelta
 from urllib.parse import quote
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 # --- CONFIGURATION LOGGING ---
 logging.basicConfig(
@@ -72,7 +72,7 @@ app.add_middleware(
 
 # --- HELPER FUNCTIONS ---
 
-def regex_search_all_products(query: str, limit: int = 3) -> tuple[pd.DataFrame, bool]:
+def regex_search_all_products(query: str, limit: int = 3) -> Tuple[pd.DataFrame, bool]:
     """Search across all products using regex with OR logic and relevance scoring
     
     Returns:
@@ -830,8 +830,11 @@ async def submit_lead(lead: LeadRequest, background_tasks: BackgroundTasks):
     if not lead.timestamp:
         lead.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-    # Convert model to dict
-    lead_data = lead.model_dump()
+    # Convert model to dict (Compatibility for Pydantic V1 and V2)
+    if hasattr(lead, "model_dump"):
+        lead_data = lead.model_dump()
+    else:
+        lead_data = lead.dict()
     
     # Run in background
     background_tasks.add_task(save_lead_to_sheet, lead_data)

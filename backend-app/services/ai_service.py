@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from openai import OpenAI
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
 # Load env variables
@@ -32,7 +33,7 @@ def configure_genai():
         logger.error(f"Failed to configure DeepSeek: {e}")
         return False
 
-async def get_ai_response(user_msg: str, context: list, intent: dict, type="chat") -> str:
+async def get_ai_response(user_msg: str, context: List[Any], intent: Dict[str, Any], type: str = "chat") -> str:
     """
     Generates a response using DeepSeek Chat (V3).
     """
@@ -71,7 +72,7 @@ async def get_ai_response(user_msg: str, context: list, intent: dict, type="chat
         logger.error(f"DeepSeek Chat Error: {e}")
         return "Xin lỗi, em đang bị quá tải. Anh chị chờ chút nhé!"
 
-async def extract_search_intent(query: str, categories: list = None) -> dict:
+async def extract_search_intent(query: str, categories: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Extracts search filters (product name, price, location) using DeepSeek.
     Returns JSON.
@@ -125,7 +126,7 @@ async def extract_search_intent(query: str, categories: list = None) -> dict:
         logger.error(f"Intent Extraction Error: {e}")
         return {}
 
-async def smart_product_filter(query: str, products: list) -> dict:
+async def smart_product_filter(query: str, products: List[Any]) -> Dict[str, Any]:
     """
     Optional: Advanced filtering using LLM.
     Returns: {"found": bool, "products": list, "reasoning": str}

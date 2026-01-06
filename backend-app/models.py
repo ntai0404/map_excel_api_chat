@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List, Optional
 
 class ChatRequest(BaseModel):
     message: str
@@ -10,7 +11,7 @@ class ProductInfo(BaseModel):
     price: str
     image_url: str = ""
     link: str = ""
-    staff_zalo: str | None = None
+    staff_zalo: Optional[str] = None
 
 class StoreInfo(BaseModel):
     name: str
@@ -18,19 +19,19 @@ class StoreInfo(BaseModel):
     lat: float
     lng: float
     distance_km: float
-    zalo_group_link: str | None = None
-    products: list[ProductInfo] = []
+    zalo_group_link: Optional[str] = None
+    products: List[ProductInfo] = []
 
 class ChatResponse(BaseModel):
     reply: str
-    nearest_stores: list[StoreInfo] = []
+    nearest_stores: List[StoreInfo] = []
     trigger_location: bool = False
 
 class LeadRequest(BaseModel):
-    user_name: str | None = "Khách"
-    user_id: str | None = None
+    user_name: Optional[str] = "Khách"
+    user_id: Optional[str] = None
     product_name: str
-    shop_name: str | None = None
+    shop_name: Optional[str] = None
     chat_context: str
     zalo_contact: str = "" # Now used for Phone Number
     avatar_url: str = "" # New field
