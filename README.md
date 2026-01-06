@@ -1,6 +1,6 @@
-# 📍 AI Smart Chatbot - Location Based Store Finder
+# 📍 AI Smart Chatbot - Location Based Store Finder (DeepSeek V3)
 
-Dự án Chatbot tích hợp AI (Google Gemini) giúp người dùng tìm kiếm sản phẩm và cửa hàng gần nhất dựa trên vị trí thực tế, hỗ trợ đăng nhập qua Zalo và quản lý dữ liệu linh hoạt từ Google Sheets.
+Dự án Chatbot tích hợp AI (DeepSeek V3) giúp người dùng tìm kiếm sản phẩm và cửa hàng gần nhất dựa trên vị trí thực tế, hỗ trợ đăng nhập qua Zalo và quản lý dữ liệu linh hoạt từ Google Sheets. Phiên bản mới đã cải tiến mạnh mẽ hệ thống ghi nhận khách hàng tiềm năng (Lead Generation).
 
 ---
 
@@ -9,8 +9,9 @@ Dự án Chatbot tích hợp AI (Google Gemini) giúp người dùng tìm kiếm
 ### **📋 Yêu Cầu Hệ Thống**
 - Python 3.8+
 - Git
-- Google Gemini API Key ([Lấy tại đây](https://aistudio.google.com/app/apikey))
+- DeepSeek API Key ([Lấy tại đây](https://platform.deepseek.com/))
 - Zalo App ID & Secret ([Đăng ký tại đây](https://developers.zalo.me/))
+- Google Sheet API (Service Account) để lưu Lead
 
 ---
 
@@ -32,9 +33,10 @@ pip install -r backend-app/requirements.txt
 - `fastapi` - Web framework
 - `uvicorn` - ASGI server
 - `pandas` - Xử lý dữ liệu
-- `google-generativeai` - Gemini AI
+- `openai` - Client kết nối DeepSeek API
 - `geopy` - Tính khoảng cách GPS
 - `httpx` - HTTP client cho Zalo OAuth
+- `gspread` - Kết nối Google Sheets (ghi Lead)
 
 ---
 
@@ -50,10 +52,9 @@ cp .env.example .env
 Mở file `.env` và điền thông tin:
 
 ```env
-# ===== Google AI Configuration =====
-AI_API_KEY=AIzaSy...  # Lấy từ https://aistudio.google.com/app/apikey
-AI_MODEL_NAME=gemini-2.5-flash-lite
-AI_API_BASE=  # Để trống nếu dùng Gemini API chính thức
+# ===== AI Configuration (DeepSeek) =====
+DEEPSEEK_API_KEY=sk-...  # Lấy từ https://platform.deepseek.com/
+DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 # ===== Zalo OAuth Configuration =====
 ZALO_APP_ID=1234567890  # App ID từ Zalo Developer
@@ -242,47 +243,43 @@ sudo systemctl status chatbot
 ```
 map_excel_api_chat/
 ├── backend-app/
-│   ├── main.py                 # Entry point (FastAPI)
-│   ├── models.py               # Pydantic Models
+│   ├── main.py                 # Entry point (FastAPI) & Lead Endpoints
+│   ├── models.py               # Pydantic Models for Chat & Leads
 │   ├── services/
-│   │   ├── ai_service.py       # Gemini AI logic
+│   │   ├── ai_service.py       # DeepSeek AI logic (V3)
 │   │   ├── geo_service.py      # GPS & distance calculation
-│   │   └── sheet_service.py    # Google Sheets data loader
+│   │   ├── sheet_service.py    # Google Sheets Loader & Lead Saver
+│   │   └── product_view.py     # Proxy/Scraper cho trang sản phẩm
 │   └── requirements.txt        # Python dependencies
-├── index.html                  # Main chat interface
-├── login.html                  # Login page
-├── avatar-display.js           # User/Guest display logic
-├── script.js                   # Chat & Map logic
-├── style.css                   # Main styles
-├── .env.example                # Environment template
-└── README.md                   # This file
+├── plan/                       # Tài liệu thiết kế & Workflow
+├── index.html                  # Giao diện Chat chính
+├── login.html                  # Trang đăng nhập Zalo
+├── avatar-display.js           # Xử lý thông tin người dùng
+├── script_app.js               # Logic Chat, Map & Persistence (Main)
+├── style.css                   # Stylesheet
+├── .env.example                # File cấu hình mẫu
+└── README.md                   # Tài liệu hướng dẫn
 ```
 
 ---
 
 ## ✨ Tính Năng Chính
 
-### 🤖 **AI-Powered Search v2.0**
-- **Smart Product Filter:** AI tự động lọc sản phẩm phù hợp từ hàng nghìn items
-- **3-Tier Fallback Strategy:** Xử lý thông minh khi không tìm thấy sản phẩm chính xác
-- **Category-Based Recommendations:** Gợi ý sản phẩm cùng danh mục khi regex thất bại
-- **General Inquiry Detection:** Nhận diện lời chào và câu hỏi chung
+### 🤖 **DeepSeek AI V3 Integration**
+- **Smarter Interaction:** Sử dụng DeepSeek Chat V3 cho phản hồi tự nhiên và nhanh hơn.
+- **3-Tier Fallback Strategy:** Xử lý thông minh khi không tìm thấy sản phẩm chính xác.
+- **Intent Extraction:** Tự động trích xuất ý định tìm kiếm (sản phẩm, danh mục, địa điểm).
+
+### 🚀 **Lead Generation & Persistence**
+- **Deep Interest Tracking:** Ghi nhận chuỗi hành vi của người dùng (xem sản phẩm, bấm vào nhóm).
+- **LocalStorage Persistence:** Dữ liệu không bị mất khi đóng tab hoặc tải lại trang (đến 24h).
+- **Google Sheets Lead Saver:** Tự động lưu thông tin khách (Tên, SĐT, Avatar, Link Shop, Sản phẩm quan tâm) vào Sheet "Leads".
+- **Smarter Match Logic:** Tự động khớp nút "Vào nhóm" với sản phẩm thực tế người dùng vừa xem.
 
 ### 🗺️ **Location-Based Features**
-- Định vị GPS người dùng
-- Tính khoảng cách chính xác (geodesic)
-- Hiển thị cửa hàng gần nhất trên bản đồ
-- Popup thông tin chi tiết + link Zalo group
-
-### 🔐 **Zalo Integration**
-- OAuth V4 với PKCE
-- Đăng nhập nhanh qua Zalo
-- Liên kết trực tiếp đến Zalo OA/Group
-
-### 📊 **Data Management**
-- Đọc real-time từ Google Sheets
-- Hỗ trợ multi-category products
-- Auto-reload data khi Sheets thay đổi
+- Định vị GPS người dùng và tính khoảng cách geodesic.
+- Hiển thị 5 cửa hàng gần nhất với thông tin chi tiết.
+- Tích hợp bản đồ Leaflet trực quan.
 
 ---
 
@@ -308,6 +305,14 @@ pip install -r backend-app/requirements.txt
 ---
 
 ## 📝 Changelog
+
+### **v4.0 - DeepSeek Core & Lead Management System** (2026-01-06)
+- ✅ **Core AI Upgrade**: Chuyển từ Gemini sang **DeepSeek Chat V3** (nhanh hơn, chính xác hơn).
+- ✅ **Lead Submission Workflow**: Ghi dữ liệu khách hàng tiềm năng về Google Sheet "Leads" (Timestamp, Name, Phone, Product, Shop Link).
+- ✅ **Mobile RAM Optimization**: Chuyển toàn bộ hệ thống lưu trữ sang `localStorage` để dữ liệu sống sót khi trình duyệt mobile bị reload ngầm.
+- ✅ **Product-Resolution Engine**: Sửa lỗi lệch thông tin Shop/Sản phẩm bằng cơ chế "Tìm ngược từ cuối history" và ưu tiên hàng chưa gửi.
+- ✅ **Smooth User Flow**: Tự động ghi nhớ số điện thoại để không hỏi lại nhiều lần trong cùng một phiên làm việc.
+- ✅ **Avatar & Profile Capture**: Lưu trữ và hiển thị ảnh đại diện Zalo trong quá trình chốt đơn.
 
 ### **v3.1 - Product Links, OAuth PKCE & Session Management** (2025-12-15)
 - ✅ Add product URL links - "🔗 Xem sản phẩm" button in product cards
