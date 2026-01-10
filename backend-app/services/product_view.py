@@ -178,9 +178,7 @@ def clean_html_for_chatbox_redirect(html_content: str, product_id: str) -> str:
                         var newBtn = btn.cloneNode(true);
                         newBtn.dataset.hijacked = 'true';
                         
-                        // Force styling to ensure it looks active/clickable if it was disabled
                         newBtn.disabled = false;
-                        newBtn.style.pointerEvents = 'auto';
                         newBtn.style.cursor = 'pointer';
                         
                         newBtn.onclick = function(e) {
@@ -219,6 +217,13 @@ def clean_html_for_chatbox_redirect(html_content: str, product_id: str) -> str:
     </script>
     
     <style>
+    /* LOCK BUTTONS UNTIL READY (Functional only) */
+    button:not([data-hijacked]), 
+    a[class*="buy"]:not([data-hijacked]), 
+    a[class*="cart"]:not([data-hijacked]) { 
+        pointer-events: none !important; 
+    }
+
     /* PRIORITY: Hide Dropbuy Logo */
     img[src*="logo"], img[alt="Logo"], .logo-wrapper img {
         display: none !important;
