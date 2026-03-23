@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 from openai import OpenAI
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
@@ -12,8 +13,10 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # --- CONFIGURATION ---
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+# --- CONFIGURATION ---
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+NVIDIA_BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
+NVIDIA_MODEL_NAME = os.getenv("NVIDIA_MODEL_NAME", "deepseek-ai/deepseek-r1")
 
 # Cache for AI standardization
 AI_ADDR_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', 'ai_address_cache.json')
@@ -37,19 +40,60 @@ def save_ai_cache(cache):
 # Initialize Client
 client = None
 
+def log_ai_usage(response, model_name="unknown"):
+    """
+    Logs token usage from AI response.
+    """
+    try:
+        usage = getattr(response, 'usage', None)
+        if usage:
+            prompt = getattr(usage, 'prompt_tokens', 0)
+            completion = getattr(usage, 'completion_tokens', 0)
+            total = getattr(usage, 'total_tokens', 0)
+            logger.info(f"📊 [AI-QUOTA-CHECK] Model: {model_name} | Prompt: {prompt} | Completion: {completion} | TOTAL: {total}")
+        else:
+            logger.warning(f"⚠️ [AI-QUOTA-CHECK] No usage data returned for model {model_name}.")
+    except Exception as e:
+        logger.error(f"Error logging AI usage: {e}")
+
+def extract_json(content: str) -> Dict[str, Any]:
+    """
+    Extracts JSON from text, handling markdown blocks.
+    """
+    if not content:
+        return {}
+    
+    # Try direct parse
+    try:
+        return json.loads(content)
+    except Exception:
+        pass
+        
+    # Try cleaning markdown blocks
+    try:
+        match = re.search(r'```(?:json)?\s*({.*?})\s*```', content, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+    except Exception:
+        pass
+        
+    logger.warning(f"Failed to extract JSON from AI content: {content[:100]}...")
+    return {}
+
 def configure_genai():
-    """Confirms DeepSeek Client is ready."""
+    """Confirms NVIDIA Client is ready."""
     global client
-    if not DEEPSEEK_API_KEY:
-        logger.error("DEEPSEEK_API_KEY not found in .env")
+    if not NVIDIA_API_KEY:
+        logger.error("NVIDIA_API_KEY not found in .env")
         return False
     
     try:
-        client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
-        logger.info("DeepSeek AI Configured Successfully.")
+        # NVIDIA API is OpenAI-compatible
+        client = OpenAI(api_key=NVIDIA_API_KEY, base_url=NVIDIA_BASE_URL)
+        logger.info(f"NVIDIA AI Configured Successfully (Model: {NVIDIA_MODEL_NAME}).")
         return True
     except Exception as e:
-        logger.error(f"Failed to configure DeepSeek: {e}")
+        logger.error(f"Failed to configure NVIDIA AI: {e}")
         return False
 
 async def get_ai_response(user_msg: str, context: List[Any], intent: Dict[str, Any], type: str = "chat") -> str:
@@ -77,15 +121,19 @@ async def get_ai_response(user_msg: str, context: List[Any], intent: Dict[str, A
         """
 
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model=NVIDIA_MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_msg}
             ],
             temperature=0.7,
-            max_tokens=500,
+            max_tokens=1024, # Increased for DeepSeek-R1
             stream=False
         )
+        
+        # Log usage
+        log_ai_usage(response, NVIDIA_MODEL_NAME)
+        
         return response.choices[0].message.content
 
     except Exception as e:
@@ -133,15 +181,22 @@ async def extract_search_intent(query: str, categories: Optional[List[str]] = No
         """
 
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model=NVIDIA_MODEL_NAME,
             messages=[
                 {"role": "system", "content": "You are a JSON extractor."},
                 {"role": "user", "content": prompt}
             ],
-            response_format={"type": "json_object"},
             temperature=0.1
         )
-        return json.loads(response.choices[0].message.content)
+        
+        # Log content for debugging
+        content = response.choices[0].message.content
+        logger.info(f"🔍 [AI-INTENT-RAW]: {content}")
+        
+        # Log usage
+        log_ai_usage(response, NVIDIA_MODEL_NAME)
+        
+        return extract_json(content)
     except Exception as e:
         logger.error(f"Intent Extraction Error: {e}")
         return {}
@@ -191,10 +246,14 @@ async def standardize_address_ai(ward: str, district: str, city: str) -> str:
     
     try:
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model=NVIDIA_MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1
         )
+        
+        # Log usage
+        log_ai_usage(response, NVIDIA_MODEL_NAME)
+        
         clean_addr = response.choices[0].message.content.strip()
         cache[raw_key] = clean_addr
         save_ai_cache(cache)

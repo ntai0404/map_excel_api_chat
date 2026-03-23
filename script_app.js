@@ -404,6 +404,11 @@ function focusOnStore(lat, lng, name) {
 // --- Geolocation Logic ---
 let isLocating = false;
 
+function isInVietnam(lat, lng) {
+    // Rough coordinates for Vietnam mainland and islands
+    return lat >= 8.0 && lat <= 24.0 && lng >= 102.0 && lng <= 110.0;
+}
+
 function getUserLocation(isAutoTriggered = false) {
     if (isLocating) {
         console.log("GPS: Request already in progress, returning current state...");
@@ -443,7 +448,15 @@ function getUserLocation(isAutoTriggered = false) {
             stopWatching();
 
             if (pos) {
-                currentUserLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                
+                if (!isInVietnam(lat, lng)) {
+                    console.warn(`📍 GPS: Detected location [${lat}, ${lng}] is outside Vietnam (likely a browser mockup or VPN error).`);
+                    // We don't overwrite it here, but we'll show a warning later in handleLocationCheck
+                }
+
+                currentUserLocation = { lat: lat, lng: lng };
                 sessionStorage.setItem('last_location', JSON.stringify(currentUserLocation));
                 sessionStorage.setItem('last_location_acc', pos.coords.accuracy.toFixed(0));
                 updateMap(currentUserLocation.lat, currentUserLocation.lng, null);
@@ -770,8 +783,13 @@ async function handleLocationCheck(isAutoTriggered = false) {
             // Updated logic: ALWAYS silent for auto-trigger (as requested by user)
             // Manual click (!isAutoTriggered) still shows feedback
             if (!isAutoTriggered) {
-                const prefix = acc <= 200 ? "Tuyệt vời! 🐝" : "Dạ,";
-                renderMessage('ai', `${prefix} Beenet đã nhận được vị trí của bạn${addressText}. Hãy nói cho mình biết bạn cần tìm gì nhé!`, true);
+                if (!isInVietnam(location.lat, location.lng)) {
+                    renderMessage('ai', `<i class="material-icons" style="color:#fbc02d; vertical-align:bottom;">warning</i> **CẢNH BÁO VỊ TRÍ:** Beenet phát hiện bạn đang ở nước ngoài hoặc trình duyệt định vị sai (Vĩ độ: ${location.lat.toFixed(2)}). 
+                    Hãy thử tắt/bật lại định vị hoặc nhập tên tỉnh/thành phố để mình tìm chính xác hơn nhé! 🐝`, true);
+                } else {
+                    const prefix = acc <= 200 ? "Tuyệt vời! 🐝" : "Dạ,";
+                    renderMessage('ai', `${prefix} Beenet đã nhận được vị trí của bạn${addressText}. Hãy nói cho mình biết bạn cần tìm gì nhé!`, true);
+                }
             }
             // Still mark resolved so we don't nag
             sessionStorage.setItem('locationResolved', 'true');

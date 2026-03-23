@@ -111,7 +111,7 @@ def geocode_address(address, cache=None, structured=None, expected_province=None
         print(f"!!! CRITICAL Geocoding error: {e}")
         return None
 
-def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFrame, limit: int = 3):
+def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFrame, limit: int = 3, max_distance_km: float = None):
     user_location = (user_lat, user_long)
     stores_with_distance = []
 
@@ -121,6 +121,10 @@ def find_nearest_stores(user_lat: float, user_long: float, stores_df: pd.DataFra
             distance = geodesic(user_location, store_location).km
         except ValueError:
             continue # Skip invalid coords
+
+        # Filter by distance if specified
+        if max_distance_km and distance > max_distance_km:
+            continue
 
         stores_with_distance.append({
             "store_id": store['store_id'],
