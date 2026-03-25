@@ -32,6 +32,11 @@ PROVIDERS = [
     {"name": "NVIDIA", "keys": NVIDIA_KEYS, "base_url": NVIDIA_BASE_URL, "model": NVIDIA_MODEL_NAME}
 ]
 
+# Health tracking to avoid slow sequential failures
+# Format: { "Gemini": timestamp, "NVIDIA": timestamp }
+PROVIDER_FAILURE_CACHE = {}
+FAILURE_COOLDOWN_SEC = 60 # Skip a failing provider for 60s
+
 # Cache for AI standardization
 AI_ADDR_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', 'ai_address_cache.json')
 
@@ -101,11 +106,26 @@ def configure_genai():
 async def call_ai_with_fallback(system_prompt: str, user_msg: str, temperature: float = 0.7, max_tokens: int = 1024):
     """
     Tries all Gemini keys first, then all NVIDIA keys if needed.
+    Includes timeouts and simple health-tracking to avoid latency.
     """
+    import time
+    now = time.time()
+    
     for provider in PROVIDERS:
+        # SKIP if provider recently failed globally (avoid sequential timeout wait)
+        last_fail = PROVIDER_FAILURE_CACHE.get(provider["name"], 0)
+        if now - last_fail < FAILURE_COOLDOWN_SEC:
+            logger.warning(f"⏩ Skipping provider {provider['name']} (Cooling down after recent failure)")
+            continue
+
+        success_at_least_one_key = False
         for key in provider["keys"]:
             try:
-                temp_client = OpenAI(api_key=key, base_url=provider["base_url"])
+                # Use a specific timeout for the completion call to avoid hanging
+                # 12 seconds is usually enough for Flash models
+                timeout = 15.0 
+                
+                temp_client = OpenAI(api_key=key, base_url=provider["base_url"], timeout=timeout)
                 response = temp_client.chat.completions.create(
                     model=provider["model"],
                     messages=[
@@ -118,11 +138,17 @@ async def call_ai_with_fallback(system_prompt: str, user_msg: str, temperature: 
                 )
                 # Log usage
                 log_ai_usage(response, provider["model"])
+                success_at_least_one_key = True
                 return response
             except Exception as e:
                 logger.warning(f"⚠️ Provider {provider['name']} (Key: {key[:8]}...) failed: {e}")
-                continue # Try next key/provider
-    
+                continue # Try next key
+        
+        # If we exhausted ALL keys for this provider, mark it as failed for COOLDOWN
+        if not success_at_least_one_key:
+            logger.error(f"❌ Provider {provider['name']} fully exhausted. Setting cooldown.")
+            PROVIDER_FAILURE_CACHE[provider["name"]] = time.time()
+            
     logger.error("❌ ALL AI PROVIDERS AND KEYS EXHAUSTED!")
     return None
 
