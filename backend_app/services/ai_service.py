@@ -12,11 +12,25 @@ load_dotenv()
 # Logger configuration
 logger = logging.getLogger(__name__)
 
-# --- CONFIGURATION ---
-# --- CONFIGURATION ---
-NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+# --- CONFIGURATION (Multi-Key & Fallback) ---
+def get_env_list(key, default=""):
+    val = os.getenv(key, default)
+    return [k.strip() for k in val.split(",") if k.strip()]
+
+GEMINI_KEYS = get_env_list("GEMINI_KEYS")
+NVIDIA_KEYS = get_env_list("NVIDIA_KEYS")
+
+GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-1.5-flash")
+
 NVIDIA_BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
-NVIDIA_MODEL_NAME = os.getenv("NVIDIA_MODEL_NAME", "deepseek-ai/deepseek-r1")
+NVIDIA_MODEL_NAME = os.getenv("NVIDIA_MODEL_NAME", "deepseek-ai/deepseek-v3.1")
+
+# Provider priority list
+PROVIDERS = [
+    {"name": "Gemini", "keys": GEMINI_KEYS, "base_url": GEMINI_BASE_URL, "model": GEMINI_MODEL_NAME},
+    {"name": "NVIDIA", "keys": NVIDIA_KEYS, "base_url": NVIDIA_BASE_URL, "model": NVIDIA_MODEL_NAME}
+]
 
 # Cache for AI standardization
 AI_ADDR_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', 'ai_address_cache.json')
@@ -81,125 +95,103 @@ def extract_json(content: str) -> Dict[str, Any]:
     return {}
 
 def configure_genai():
-    """Confirms NVIDIA Client is ready."""
-    global client
-    if not NVIDIA_API_KEY:
-        logger.error("NVIDIA_API_KEY not found in .env")
-        return False
+    """No-op for multi-key system (clients initialized per-call)."""
+    return True
+
+async def call_ai_with_fallback(system_prompt: str, user_msg: str, temperature: float = 0.7, max_tokens: int = 1024):
+    """
+    Tries all Gemini keys first, then all NVIDIA keys if needed.
+    """
+    for provider in PROVIDERS:
+        for key in provider["keys"]:
+            try:
+                temp_client = OpenAI(api_key=key, base_url=provider["base_url"])
+                response = temp_client.chat.completions.create(
+                    model=provider["model"],
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_msg}
+                    ],
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    stream=False
+                )
+                # Log usage
+                log_ai_usage(response, provider["model"])
+                return response
+            except Exception as e:
+                logger.warning(f"⚠️ Provider {provider['name']} (Key: {key[:8]}...) failed: {e}")
+                continue # Try next key/provider
     
-    try:
-        # NVIDIA API is OpenAI-compatible
-        client = OpenAI(api_key=NVIDIA_API_KEY, base_url=NVIDIA_BASE_URL)
-        logger.info(f"NVIDIA AI Configured Successfully (Model: {NVIDIA_MODEL_NAME}).")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to configure NVIDIA AI: {e}")
-        return False
+    logger.error("❌ ALL AI PROVIDERS AND KEYS EXHAUSTED!")
+    return None
 
 async def get_ai_response(user_msg: str, context: List[Any], intent: Dict[str, Any], type: str = "chat") -> str:
     """
     Generates a response using DeepSeek Chat (V3).
     """
-    if not client:
-        configure_genai()
-        if not client:
-            return "Hệ thống AI đang bảo trì (Missing Key)."
+    # Construct System Prompt based on context
+    system_prompt = f"""Bạn là trợ lý ảo mua sắm thông minh của hệ thống 'Beenet.vn' - Nền tảng mua sắm theo vị trí hàng đầu.
+    Phong cách: Thân thiện, nhiệt tình, chuyên nghiệp và luôn sử dụng emoji 🐝✨ để tạo cảm giác gần gũi.
+    Nhiệm vụ: Tư vấn sản phẩm, gợi ý cửa hàng gần nhất giúp khách hàng mua sắm tiện lợi nhất.
+    
+    Thông tin khách hàng đang xem:
+    {json.dumps(context, ensure_ascii=False, indent=2)}
 
-    try:
-        # Construct System Prompt based on context
-        system_prompt = f"""Bạn là trợ lý ảo mua sắm thông minh của hệ thống 'Beenet.vn' - Nền tảng mua sắm theo vị trí hàng đầu.
-        Phong cách: Thân thiện, nhiệt tình, chuyên nghiệp và luôn sử dụng emoji 🐝✨ để tạo cảm giác gần gũi.
-        Nhiệm vụ: Tư vấn sản phẩm, gợi ý cửa hàng gần nhất giúp khách hàng mua sắm tiện lợi nhất.
-        
-        Thông tin khách hàng đang xem:
-        {json.dumps(context, ensure_ascii=False, indent=2)}
+    Yêu cầu trả lời:
+    - Ngắn gọn, thân thiện, dùng emoji.
+    - Nếu có sản phẩm phù hợp, hãy mời khách chốt đơn.
+    - Nếu không có, gợi ý sản phẩm tương tự.
+    """
 
-        Yêu cầu trả lời:
-        - Ngắn gọn, thân thiện, dùng emoji.
-        - Nếu có sản phẩm phù hợp, hãy mời khách chốt đơn.
-        - Nếu không có, gợi ý sản phẩm tương tự.
-        """
-
-        response = client.chat.completions.create(
-            model=NVIDIA_MODEL_NAME,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_msg}
-            ],
-            temperature=0.7,
-            max_tokens=1024, # Increased for DeepSeek-R1
-            stream=False
-        )
-        
-        # Log usage
-        log_ai_usage(response, NVIDIA_MODEL_NAME)
-        
-        return response.choices[0].message.content
-
-    except Exception as e:
-        logger.error(f"DeepSeek Chat Error: {e}")
-        return "Xin lỗi, em đang bị quá tải. Anh chị chờ chút nhé!"
+    res = await call_ai_with_fallback(system_prompt, user_msg)
+    if res:
+        return res.choices[0].message.content
+    
+    return "Xin lỗi, hiện tại em đang bị quá tải và không thể kết nối với bộ não AI. Anh chị vui lòng quay lại sau ít phút nhé! 🐝💔"
 
 async def extract_search_intent(query: str, categories: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Extracts search filters (product name, price, location) using DeepSeek.
     Returns JSON.
     """
-    if not client:
-        configure_genai()
-        if not client: return {}
+    # Include categories in prompt if available to improve accuracy
+    cat_str = ", ".join(categories) if categories else "Electronics, General"
+    
+    prompt = f"""
+    Phân tích câu tìm kiếm của khách hàng và trích xuất thông tin JSON.
+    
+    Query: "{query}"
+    Danh mục hợp lệ (ưu tiên khớp chính xác): {cat_str}
+    
+    Nhiệm vụ:
+    1. Nếu khách tìm Loại sản phẩm chung chung (VD: "mua máy tính", "đồ gia dụng") -> Cố gắng khớp với "Danh mục hợp lệ" ở trên và điền vào trường "category".
+    2. Nếu khách tìm Tên sản phẩm cụ thể (VD: "Macbook Air M1", "Nồi cơm Sharp") -> Điền vào trường "product".
+    
+    Quy tắc Boolean (Quan Trọng):
+    - Nếu tìm thấy "category" HOẶC "product" -> is_general_inquiry = false.
+    - Chỉ khi khách chào hỏi xã giao (hi, hello) hoặc hỏi về chính sách/giờ làm việc -> is_general_inquiry = true.
+    - "is_location_request" = true chỉ khi có từ khóa địa điểm ("ở đâu", "gần đây", "tại Hà Nội").
 
-    try:
-        # Include categories in prompt if available to improve accuracy
-        cat_str = ", ".join(categories) if categories else "Electronics, General"
-        
-        prompt = f"""
-        Phân tích câu tìm kiếm của khách hàng và trích xuất thông tin JSON.
-        
-        Query: "{query}"
-        Danh mục hợp lệ (ưu tiên khớp chính xác): {cat_str}
-        
-        Nhiệm vụ:
-        1. Nếu khách tìm Loại sản phẩm chung chung (VD: "mua máy tính", "đồ gia dụng") -> Cố gắng khớp với "Danh mục hợp lệ" ở trên và điền vào trường "category".
-        2. Nếu khách tìm Tên sản phẩm cụ thể (VD: "Macbook Air M1", "Nồi cơm Sharp") -> Điền vào trường "product".
-        
-        Quy tắc Boolean (Quan Trọng):
-        - Nếu tìm thấy "category" HOẶC "product" -> is_general_inquiry = false.
-        - Chỉ khi khách chào hỏi xã giao (hi, hello) hoặc hỏi về chính sách/giờ làm việc -> is_general_inquiry = true.
-        - "is_location_request" = true chỉ khi có từ khóa địa điểm ("ở đâu", "gần đây", "tại Hà Nội").
+    Output Format (JSON strict):
+    {{
+        "category": "Tên danh mục chính xác",
+        "product": "Tên sản phẩm cụ thể",
+        "keyword": "từ khóa tìm kiếm",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": boolean,
+        "is_general_inquiry": boolean
+    }}
+    """
 
-        Output Format (JSON strict):
-        {{
-            "category": "Tên danh mục chính xác",
-            "product": "Tên sản phẩm cụ thể",
-            "keyword": "từ khóa tìm kiếm",
-            "max_price": 0,
-            "location": "",
-            "is_location_request": boolean,
-            "is_general_inquiry": boolean
-        }}
-        """
-
-        response = client.chat.completions.create(
-            model=NVIDIA_MODEL_NAME,
-            messages=[
-                {"role": "system", "content": "You are a JSON extractor."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.1
-        )
-        
-        # Log content for debugging
-        content = response.choices[0].message.content
+    res = await call_ai_with_fallback("You are a JSON extractor.", prompt, temperature=0.1)
+    if res:
+        content = res.choices[0].message.content
         logger.info(f"🔍 [AI-INTENT-RAW]: {content}")
-        
-        # Log usage
-        log_ai_usage(response, NVIDIA_MODEL_NAME)
-        
         return extract_json(content)
-    except Exception as e:
-        logger.error(f"Intent Extraction Error: {e}")
-        return {}
+    
+    return {}
 
 async def smart_product_filter(query: str, products: List[Any]) -> Dict[str, Any]:
     """
@@ -226,13 +218,6 @@ async def standardize_address_ai(ward: str, district: str, city: str) -> str:
     if raw_key in cache:
         return cache[raw_key]
     
-    global client
-    if not client:
-        configure_genai()
-    
-    if not client:
-        return f"{ward}, {district}, {city}"
-        
     prompt = f"""Bạn là chuyên gia về địa lý Việt Nam. 
     Hãy chuẩn hóa địa chỉ sau thành định dạng chuẩn nhất để bản đồ có thể xác định được tọa độ.
     Dữ liệu thô: {ward}, {district}, {city}
@@ -244,20 +229,11 @@ async def standardize_address_ai(ward: str, district: str, city: str) -> str:
     4. Chỉ trả về 1 dòng địa chỉ duy nhất, không giải thích gì thêm.
     """
     
-    try:
-        response = client.chat.completions.create(
-            model=NVIDIA_MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1
-        )
-        
-        # Log usage
-        log_ai_usage(response, NVIDIA_MODEL_NAME)
-        
-        clean_addr = response.choices[0].message.content.strip()
+    res = await call_ai_with_fallback("Chuẩn hóa địa chỉ Việt Nam", prompt, temperature=0.1)
+    if res:
+        clean_addr = res.choices[0].message.content.strip()
         cache[raw_key] = clean_addr
         save_ai_cache(cache)
         return clean_addr
-    except Exception as e:
-        logger.error(f"AI Address Standarization Error: {e}")
-        return f"{ward}, {district}, {city}"
+    
+    return f"{ward}, {district}, {city}"

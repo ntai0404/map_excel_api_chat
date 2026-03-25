@@ -429,6 +429,7 @@ async def chat_with_ai(request: ChatRequest):
             img_url = ""
             if not p_row.empty:
                 price = str(p_row['Giá niêm yết'].iloc[0]) if pd.notna(p_row['Giá niêm yết'].iloc[0]) else "Liên hệ"
+                if price != "Liên hệ" and "VNĐ" not in price: price += " VNĐ"
                 img_url = str(p_row['Link ảnh'].iloc[0]) if pd.notna(p_row['Link ảnh'].iloc[0]) else ""
 
             final_msg = ai_result['ai_message_template']
@@ -441,7 +442,10 @@ async def chat_with_ai(request: ChatRequest):
                                  .replace("{{zalo_link}}", shop.get('zalo_group_link', ''))
 
             if 'km' not in final_msg.lower(): final_msg += f" Shop cách bạn {nearest['distance']:.1f} km."
-            if price != "Liên hệ" and price not in final_msg: final_msg += f" Giá {price}."
+            if price != "Liên hệ" and price not in final_msg: 
+                # Ensure VNĐ is there if not already added by 'price' variable change
+                display_price = price if "VNĐ" in price else f"{price} VNĐ"
+                final_msg += f" Giá {display_price}."
 
             # Build Store Response List
             nearest_stores_resp = []
@@ -572,10 +576,13 @@ async def build_response_from_products(matched_df, lat, lng, msg, intent, type):
     for store in nearest_data:
         s_prods = matched_df[matched_df['ID Shop'].astype(str) == str(store['store_id'])]
         p_list = []
-        for _, r in s_prods.head(5).iterrows():
+        for index, r in s_prods.head(5).iterrows():
+            raw_price = str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ"
+            formatted_price = raw_price if (raw_price == "Liên hệ" or "VNĐ" in raw_price) else f"{raw_price} VNĐ"
+            
             p_list.append(ProductInfo(
                 name=str(r.get('Tên sản phẩm', '')),
-                price=str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ",
+                price=formatted_price,
                 image_url=str(r.get('Link ảnh', '')) if pd.notna(r.get('Link ảnh')) else "",
                 link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else ""),
                 staff_zalo=extract_staff_zalo(r)
@@ -626,10 +633,13 @@ async def build_category_response(cat_shops, cat_prods_df, lat, lng, msg, intent
             s_prods = s_prods[s_prods['Tên sản phẩm'].astype(str).str.lower().str.contains(filter_keyword, na=False)]
         
         p_list = []
-        for _, r in s_prods.head(15).iterrows():
-             p_list.append(ProductInfo(
+        for index, r in s_prods.head(15).iterrows():
+            raw_price = str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ"
+            formatted_price = raw_price if (raw_price == "Liên hệ" or "VNĐ" in raw_price) else f"{raw_price} VNĐ"
+
+            p_list.append(ProductInfo(
                 name=str(r.get('Tên sản phẩm', '')),
-                price=str(r.get('Giá niêm yết', 'Liên hệ')) if pd.notna(r.get('Giá niêm yết')) else "Liên hệ",
+                price=formatted_price,
                 image_url=str(r.get('Link ảnh', '')) if pd.notna(r.get('Link ảnh')) else "",
                 link=convert_to_proxy_link(str(r.get('Link sản phẩm', '')) if pd.notna(r.get('Link sản phẩm')) else ""),
                 staff_zalo=extract_staff_zalo(r)

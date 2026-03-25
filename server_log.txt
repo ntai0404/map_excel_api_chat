@@ -1,0 +1,707 @@
+2026-03-25 11:31:18,248 - __main__ - INFO - Loading .env from: C:\SINHVIEN\myprocj\map_excel_api_chat-final-branch\backend_app\..\.env
+2026-03-25 11:31:19,195 - __main__ - INFO - ✅ Firebase initialized successfully.
+C:\SINHVIEN\myprocj\map_excel_api_chat-final-branch\backend_app\main.py:220: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+INFO:     Started server process [35432]
+INFO:     Waiting for application startup.
+2026-03-25 11:31:19,278 - __main__ - INFO - Starting up application...
+
+================================================================================
+LOADING STORE DATA FROM NEW GOOGLE SHEETS
+================================================================================
+📥 Loading products from 62 sheets...
+  ... Fetching: Balo - Túi xách - Vali (GID: 815593620)
+  ✓ Balo - Túi xách - Vali: 12 products
+  ... Fetching: Bàn , ghế (GID: 1986607723)
+  ✓ Bàn , ghế: 1 products
+  ... Fetching: Bàn chải & Tăm nước (GID: 871059786)
+  ✓ Bàn chải & Tăm nước: 3 products
+  ... Fetching: Bàn phím & Chuột (GID: 28491151)
+  ✓ Bàn phím & Chuột: 9 products
+  ... Fetching: Bình nước nóng (GID: 1752922142)
+  ✓ Bình nước nóng: 1 products
+  ... Fetching: Bếp từ , bếp điện (GID: 2127097084)
+  ✓ Bếp từ , bếp điện: 7 products
+  ... Fetching: Chăm sóc nhà cửa (GID: 1436681271)
+  ✓ Chăm sóc nhà cửa: 10 products
+  ... Fetching: Củ cáp sạc (GID: 444196920)
+  ✓ Củ cáp sạc: 76 products
+  ... Fetching: Dịch vụ , phần mềm online… (GID: 667498198)
+  ✓ Dịch vụ , phần mềm online…: 13 products
+  ... Fetching: Dụng cụ cầm tay , máy khoan , cắt… (GID: 1643965690)
+  ✓ Dụng cụ cầm tay , máy khoan , cắt…: 1 products
+  ... Fetching: Dụng cụ nhà bếp (GID: 1258563817)
+  ✓ Dụng cụ nhà bếp: 40 products
+  ... Fetching: Dụng cụ thể thao (GID: 866725333)
+  ✓ Dụng cụ thể thao: 8 products
+  ... Fetching: Kính mắt (GID: 397341247)
+  ✓ Kính mắt: 6 products
+  ... Fetching: Loa (GID: 281899121)
+  ✓ Loa: 21 products
+  ... Fetching: Ly, cốc, bình giữ nhiệt (GID: 1949182727)
+  ✓ Ly, cốc, bình giữ nhiệt: 7 products
+  ... Fetching: Máy chiếu (GID: 478019717)
+  ✓ Máy chiếu: 1 products
+  ... Fetching: Máy chơi game (GID: 148397415)
+  ✓ Máy chơi game: 1 products
+  ... Fetching: Máy hút ẩm , tạo ẩm , phun sương (GID: 801472824)
+  ✓ Máy hút ẩm , tạo ẩm , phun sương: 4 products
+  ... Fetching: Máy lọc không khí (GID: 1081652131)
+  ✓ Máy lọc không khí: 8 products
+  ... Fetching: Máy Massage (GID: 374890050)
+  ✓ Máy Massage: 19 products
+  ... Fetching: Máy tính & Laptop (GID: 2137820275)
+  ✓ Máy tính & Laptop: 15 products
+  ... Fetching: Máy xay - Máy ép (GID: 824530554)
+  ✓ Máy xay - Máy ép: 8 products
+  ... Fetching: Máy ảnh & Camera (GID: 1175290915)
+  ✓ Máy ảnh & Camera: 23 products
+  ... Fetching: Mũ nón (GID: 333396090)
+  ✓ Mũ nón: 6 products
+  ... Fetching: Mẹ và Bé (GID: 1877546024)
+  ✓ Mẹ và Bé: 251 products
+  ... Fetching: Nhà cửa & đời sống (GID: 379520387)
+  ✓ Nhà cửa & đời sống: 197 products
+  ... Fetching: Nội thất (GID: 1688160677)
+  ✓ Nội thất: 2 products
+  ... Fetching: Phòng ngủ (GID: 835156817)
+  ✓ Phòng ngủ: 9 products
+  ... Fetching: Phụ kiện khác (GID: 805437056)
+  ✓ Phụ kiện khác: 65 products
+  ... Fetching: Phụ tùng (GID: 764742527)
+  ✓ Phụ tùng: 6 products
+  ... Fetching: Pin,Sạc dự phòng , ắc quy (GID: 1861521418)
+  ✓ Pin,Sạc dự phòng , ắc quy: 24 products
+  ... Fetching: Quần áo (GID: 1950842517)
+  ✓ Quần áo: 170 products
+  ... Fetching: Robot & Máy hút bụi , lau nhà (GID: 1076652714)
+  ✓ Robot & Máy hút bụi , lau nhà: 12 products
+  ... Fetching: Sức khỏe & làm đẹp (GID: 1067024040)
+  ✓ Sức khỏe & làm đẹp: 19 products
+  ... Fetching: Tai nghe - Micro (GID: 1420423361)
+  ✓ Tai nghe - Micro: 33 products
+  ... Fetching: Thiết bị - Phụ kiện (GID: 634047726)
+  ✓ Thiết bị - Phụ kiện: 5 products
+  ... Fetching: Thiết bị khác (GID: 1758622918)
+  ✓ Thiết bị khác: 21 products
+  ... Fetching: Thiết bị âm thanh (GID: 31506967)
+  ✓ Thiết bị âm thanh: 55 products
+  ... Fetching: Thiết bị điện gia dụng (GID: 1673898824)
+  ✓ Thiết bị điện gia dụng: 141 products
+  ... Fetching: Thùng các tông (GID: 1477558516)
+  ✓ Thùng các tông: 1 products
+  ... Fetching: Thời trang (GID: 951706041)
+  ✓ Thời trang: 202 products
+  ... Fetching: Thực phẩm & Đồ ăn (GID: 276874696)
+  ✓ Thực phẩm & Đồ ăn: 12 products
+  ... Fetching: Tivi ; máy chiếu (GID: 1690410600)
+  ✓ Tivi ; máy chiếu: 2 products
+  ... Fetching: Trang sức (GID: 124067928)
+  ✓ Trang sức: 1 products
+  ... Fetching: Trang trí nhà cửa (GID: 1722661331)
+  ✓ Trang trí nhà cửa: 3 products
+  ... Fetching: Văn phòng phẩm (GID: 1714524348)
+  ✓ Văn phòng phẩm: 1 products
+  ... Fetching: Vỏ ốp lưng & miếng dán (GID: 654519370)
+  ✓ Vỏ ốp lưng & miếng dán: 15 products
+  ... Fetching: Vợt muỗi , đèn bắt muỗi (GID: 301554865)
+  ✓ Vợt muỗi , đèn bắt muỗi: 8 products
+  ... Fetching: Xốp , bọt , cột khí (GID: 839522919)
+  ✓ Xốp , bọt , cột khí: 5 products
+  ... Fetching: Ô tô - Xe máy - Xe đạp (GID: 608057419)
+  ✓ Ô tô - Xe máy - Xe đạp: 23 products
+  ... Fetching: Điều hòa - Quạt (GID: 183193452)
+  ✓ Điều hòa - Quạt: 32 products
+  ... Fetching: Điện thoại & phụ kiện (GID: 142217162)
+  ✓ Điện thoại & phụ kiện: 228 products
+  ... Fetching: Điện thoại (GID: 1565181241)
+  ✓ Điện thoại: 16 products
+  ... Fetching: Đèn & ánh sáng (GID: 111911700)
+  ✓ Đèn & ánh sáng: 28 products
+  ... Fetching: Đồ Camping , phượt , cắm trại (GID: 156635143)
+  ✓ Đồ Camping , phượt , cắm trại: 9 products
+  ... Fetching: Đồ chơi - Phụ kiện (GID: 671032773)
+  ✓ Đồ chơi - Phụ kiện: 13 products
+  ... Fetching: Đồ chơi người lớn , phòng the (GID: 1180757598)
+  ✓ Đồ chơi người lớn , phòng the: 80 products
+  ... Fetching: Đồ chơi (GID: 1028300741)
+  ✓ Đồ chơi: 4 products
+  ... Fetching: Đồ dùng khác (GID: 1970437403)
+  ✓ Đồ dùng khác: 17 products
+  ... Fetching: Đồ dùng nhà tắm (GID: 1984447125)
+  ✓ Đồ dùng nhà tắm: 24 products
+  ... Fetching: Đồ phong thuỷ , tâm linh (GID: 1852736408)
+  ✓ Đồ phong thuỷ , tâm linh: 6 products
+  ... Fetching: Đồng hồ (GID: 838564855)
+  ✓ Đồng hồ: 3 products
+
+✅ Total products loaded: 2043
+
+🏪 Aggregating products by shop...
+      ✅ [STAGE 2] Clean AI success for 'Phường Cự Khối, Quận Long Biên, Thành phố Hà Nội' -> [21.0104589, 105.9101617]
+      📍 [FINAL] Bảo Phong -> [21.01049, 105.90990] (via OSM (Clean AI))
+      ⚓ [STAGE 1] Using Safe Anchor for 'HUYỆN THANH THỦY'
+      📍 [FINAL] ICT360 OFFICIAL -> [21.11977, 105.28993] (via Safe Anchor)
+      ⚓ [STAGE 1] Using Safe Anchor for 'HUYỆN GIAO THỦY'
+      📍 [FINAL] Thành Nam -> [20.25206, 106.51907] (via Safe Anchor)
+      ⚓ [STAGE 1] Using Safe Anchor for 'HUYỆN THANH THỦY'
+      📍 [FINAL] I MART STORE -> [21.12022, 105.29008] (via Safe Anchor)
+      ✅ [STAGE 2] Clean AI success for 'Phường Phú Thuận, Quận 7, Thành phố Hồ Chí Minh' -> [10.7314508, 106.7349877]
+      📍 [FINAL] Minh Phương -> [10.73173, 106.73521] (via OSM (Clean AI))
+      ✅ [STAGE 2] Clean AI success for 'Phường Đằng Lâm, Quận Hải An, Thành phố Hải Phòng' -> [20.8272371, 106.7205154]
+      📍 [FINAL] CƯỜNG DUY HẢI PHÒNG -> [20.82716, 106.72055] (via OSM (Clean AI))
+      ✅ [STAGE 2] Clean AI success for 'Phường 2, Quận Bình Thạnh, Thành phố Hồ Chí Minh' -> [10.7975849, 106.7004927]
+      📍 [FINAL] TNQuality -> [10.79744, 106.70076] (via OSM (Clean AI))
+      ✅ [STAGE 2] Clean AI success for 'Phường Bích Đào, Thành phố Ninh Bình, Ninh Bình' -> [20.2492027, 105.9899826]
+      📍 [FINAL] Hoa Vũ Jewelry -> [20.24914, 105.98983] (via OSM (Clean AI))
+      ✅ [STAGE 2] Clean AI success for 'Phường Hoàng Liệt, Quận Hoàng Mai, Thành phố Hà Nội' -> [20.9625316, 105.8399127]
+      📍 [FINAL] Shop Cậu Nhỏ -> [20.96242, 105.84017] (via OSM (Clean AI))
+      ✅ [STAGE 2] Clean AI success for 'Phường Vĩnh Hưng, Quận Hoàng Mai, Thành phố Hà Nội' -> [20.9892354, 105.8745359]
+      📍 [FINAL] Bear Việt Nam -> [20.98902, 105.87482] (via OSM (Clean AI))
+      ⚓ [STAGE 1] Using Safe Anchor for 'HUYỆN HOÀI ĐỨC'
+      📍 [FINAL] YOURCASE VIỆT NAM -> [21.02029, 105.70986] (via Safe Anchor)
+      ✅ [STAGE 2] Clean AI success for 'Phường Hòa Xuân, Quận Cẩm Lệ, Thành phố Đà Nẵng' -> [16.0108938, 108.2170888]
+      📍 [FINAL] Timeless Trip -> [16.01084, 108.21700] (via OSM (Clean AI))
+      ✅ [STAGE 2] Clean AI success for 'Phường Tây Mỗ, Quận Nam Từ Liêm, Thành phố Hà Nội' -> [21.0088528, 105.7439194]
+      📍 [FINAL] Đặc Sản Tây Bắc -> [21.00903, 105.74421] (via OSM (Clean AI))
+      ⚓ [STAGE 1] Using Safe Anchor for 'HUYỆN VĨNH TƯỜNG'
+      📍 [FINAL] HP88VP -> [21.25600, 105.47800] (via Safe Anchor)
+      ✅ [STAGE 2] Clean AI success for 'Phường Cự Khối, Quận Long Biên, Thành phố Hà Nội' -> [21.0104589, 105.9101617]
+      📍 [FINAL] KEINNIER -> [21.01023, 105.91023] (via OSM (Clean AI))
+      🚫 Province Mismatch: Found 'tỉnh gia lai quy nhơn    phường quy nhơn' but expected 'Bình Ðịnh'. Rejecting.
+      🚫 Province Mismatch: Found 'tỉnh gia lai quy nhơn    phường quy nhơn' but expected 'Bình Ðịnh'. Rejecting.
+      🚨 [STAGE 3] Emergency Fallback for 'Bình Ðịnh'
+      📍 [FINAL] Xưởng Đèn Eco Bright -> [14.10857, 109.11478] (via Province Center)
+✅ Aggregated 16 unique shops
+
+================================================================================
+✅ DATA LOADED SUCCESSFULLY: 16 shops
+================================================================================
+DEBUG: Found 'Link NV' columns: ['Link NV']
+DEBUG: Products with 'Link NV' populated: 2043 / 2043
+DEBUG: Sample Link NV: 378489226
+2026-03-25 11:32:45,891 - __main__ - INFO - Loaded 16 stores.
+2026-03-25 11:32:45,891 - __main__ - INFO - Unique Categories: 62
+2026-03-25 11:32:45,891 - __main__ - INFO - Configuring Gemini API...
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-03-25 11:32:58,437 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:32:58,438 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:03,347 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:03,358 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 995 | Completion: 67 | TOTAL: 1062
+2026-03-25 11:33:03,358 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Quần áo",
+    "product": "",
+    "keyword": "áo sơ mi nam công sở",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:33:03,359 - __main__ - INFO - Intent: {'category': 'Quần áo', 'product': '', 'keyword': 'áo sơ mi nam công sở', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:03,368 - __main__ - INFO - Found 340 products in category 'Quần áo'
+INFO:     127.0.0.1:56081 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:07,374 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:07,375 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:14,301 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:14,301 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 1006 | Completion: 69 | TOTAL: 1075
+2026-03-25 11:33:14,301 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Mẹ và Bé",
+    "product": "",
+    "keyword": "đồ chơi giáo dục",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:33:14,301 - __main__ - INFO - Intent: {'category': 'Mẹ và Bé', 'product': '', 'keyword': 'đồ chơi giáo dục', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:14,306 - __main__ - INFO - Found 251 products in category 'Mẹ và Bé'
+INFO:     127.0.0.1:56087 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:18,086 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:18,086 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:27,203 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:27,204 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 84 | TOTAL: 1083
+2026-03-25 11:33:27,204 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: 
+```json
+{
+  "category": "Bếp từ , bếp điện",
+  "product": "Nồi cơm điện Sharp hoặc Tiger",
+  "keyword": "nồi cơm điện Sharp Tiger",
+  "max_price": 0,
+  "location": "",
+  "is_location_request": false,
+  "is_general_inquiry": false
+}
+```
+2026-03-25 11:33:27,204 - __main__ - INFO - Intent: {'category': 'Bếp từ , bếp điện', 'product': 'Nồi cơm điện Sharp hoặc Tiger', 'keyword': 'nồi cơm điện Sharp Tiger', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:27,211 - __main__ - INFO - Found 14 products in category 'Bếp từ , bếp điện'
+INFO:     127.0.0.1:56093 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:28,176 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:28,176 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:35,340 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:35,340 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 995 | Completion: 64 | TOTAL: 1059
+2026-03-25 11:33:35,340 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Quần áo",
+        "product": "",
+        "keyword": "áo sơ mi nam công sở",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": false,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:33:35,340 - __main__ - INFO - Intent: {'category': 'Quần áo', 'product': '', 'keyword': 'áo sơ mi nam công sở', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:35,340 - __main__ - INFO - Found 340 products in category 'Quần áo'
+INFO:     127.0.0.1:56097 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:35,950 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:35,955 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:40,813 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:40,813 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 1004 | Completion: 83 | TOTAL: 1087
+2026-03-25 11:33:40,813 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Đồ Camping , phượt , cắm trại",
+    "product": "",
+    "keyword": "balo du lịch 40L chống nước",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:33:40,813 - __main__ - INFO - Intent: {'category': 'Đồ Camping , phượt , cắm trại', 'product': '', 'keyword': 'balo du lịch 40L chống nước', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:40,813 - __main__ - INFO - Found 9 products in category 'Đồ Camping , phượt , cắm trại'
+INFO:     127.0.0.1:56108 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:41,290 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:41,292 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:45,649 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:45,656 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 1006 | Completion: 69 | TOTAL: 1075
+2026-03-25 11:33:45,656 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Mẹ và Bé",
+    "product": "",
+    "keyword": "đồ chơi giáo dục",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:33:45,656 - __main__ - INFO - Intent: {'category': 'Mẹ và Bé', 'product': '', 'keyword': 'đồ chơi giáo dục', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:45,663 - __main__ - INFO - Found 251 products in category 'Mẹ và Bé'
+INFO:     127.0.0.1:56113 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:46,248 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:46,249 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:51,321 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:51,323 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 993 | Completion: 70 | TOTAL: 1063
+2026-03-25 11:33:51,323 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Tai nghe - Micro",
+        "product": "",
+        "keyword": "tai nghe bluetooth chống ồn",
+        "max_price": 2000000,
+        "location": "",
+        "is_location_request": false,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:33:51,323 - __main__ - INFO - Intent: {'category': 'Tai nghe - Micro', 'product': '', 'keyword': 'tai nghe bluetooth chống ồn', 'max_price': 2000000, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:33:51,325 - __main__ - INFO - Found 66 products in category 'Tai nghe - Micro'
+INFO:     127.0.0.1:56118 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:51,886 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:51,890 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:33:58,379 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:33:58,380 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 79 | TOTAL: 1078
+2026-03-25 11:33:58,382 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Thiết bị điện gia dụng",
+        "product": "nồi cơm điện Sharp hoặc Tiger",
+        "keyword": "nồi cơm điện",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": true,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:33:58,382 - __main__ - INFO - Intent: {'category': 'Thiết bị điện gia dụng', 'product': 'nồi cơm điện Sharp hoặc Tiger', 'keyword': 'nồi cơm điện', 'max_price': 0, 'location': '', 'is_location_request': True, 'is_general_inquiry': False}
+INFO:     127.0.0.1:56122 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:33:58,884 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:33:58,884 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:34:02,321 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:34:02,323 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 989 | Completion: 82 | TOTAL: 1071
+2026-03-25 11:34:02,323 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Máy tính & Laptop",
+    "product": "máy tính bảng cũ",
+    "keyword": "máy tính bảng cũ cho học sinh",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:34:02,323 - __main__ - INFO - Intent: {'category': 'Máy tính & Laptop', 'product': 'máy tính bảng cũ', 'keyword': 'máy tính bảng cũ cho học sinh', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:34:02,325 - __main__ - INFO - Found 0 products in category 'Máy tính & Laptop'
+INFO:     127.0.0.1:56127 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:34:02,878 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:34:02,878 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:34:05,714 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:34:05,715 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 1004 | Completion: 78 | TOTAL: 1082
+2026-03-25 11:34:05,715 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+    "category": "Đồ Camping , phượt , cắm trại",
+    "product": "",
+    "keyword": "balo du lịch 40L chống nước",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+2026-03-25 11:34:05,715 - __main__ - INFO - Intent: {'category': 'Đồ Camping , phượt , cắm trại', 'product': '', 'keyword': 'balo du lịch 40L chống nước', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:34:05,717 - __main__ - INFO - Found 9 products in category 'Đồ Camping , phượt , cắm trại'
+INFO:     127.0.0.1:56134 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:34:06,360 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:34:06,360 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:34:13,781 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:34:13,781 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 997 | Completion: 79 | TOTAL: 1076
+2026-03-25 11:34:13,781 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: 
+```json
+{
+  "category": "Nội thất",
+  "product": "",
+  "keyword": "bàn ghế gỗ làm việc tối giản cho phòng nhỏ",
+  "max_price": 0,
+  "location": "",
+  "is_location_request": false,
+  "is_general_inquiry": false
+}
+```
+2026-03-25 11:34:13,781 - __main__ - INFO - Intent: {'category': 'Nội thất', 'product': '', 'keyword': 'bàn ghế gỗ làm việc tối giản cho phòng nhỏ', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:34:13,783 - __main__ - INFO - Found 4 products in category 'Nội thất'
+INFO:     127.0.0.1:56140 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:34:14,314 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:34:14,314 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:34:55,898 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:34:55,900 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 995 | Completion: 976 | TOTAL: 1971
+2026-03-25 11:34:55,900 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: 
+Để trả lời câu hỏi của bạn về việc tìm kiếm các sản phẩm có giá trị lớn nhất trong một danh mục cụ thể, tôi sẽ hướng dẫn bạn cách thực hiện điều này bằng cách sử dụng SQL.
+
+Giả sử bạn có một bảng `products` với các cột như `id`, `name`, `category`, `price`. Bạn muốn tìm sản phẩm có giá cao nhất trong mỗi danh mục. Dưới đây là cách bạn có thể làm:
+
+### Cách 1: Sử dụng Subquery
+Bạn có thể sử dụng một subquery để tìm giá cao nhất trong mỗi danh mục, sau đó join với bảng `products` để lấy thông tin chi tiết của sản phẩm đó.
+
+```sql
+SELECT p1.*
+FROM products p1
+INNER JOIN (
+    SELECT category, MAX(price) as max_price
+    FROM products
+    GROUP BY category
+) p2 ON p1.category = p2.category AND p1.price = p2.max_price;
+```
+
+### Cách 2: Sử dụng Window Functions (ROW_NUMBER, RANK, DENSE_RANK)
+Nếu bạn đang sử dụng một hệ quản trị cơ sở dữ liệu hỗ trợ window functions (như PostgreSQL, SQL Server, Oracle, MySQL 8.0+), bạn có thể sử dụng `ROW_NUMBER`, `RANK`, hoặc `DENSE_RANK` để đánh số thứ tự cho các sản phẩm trong mỗi danh mục dựa trên giá, và sau đó chọn sản phẩm có thứ hạng cao nhất.
+
+Ví dụ sử dụng `ROW_NUMBER`:
+
+```sql
+WITH ranked_products AS (
+    SELECT 
+        *,
+        ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC) as rn
+    FROM products
+)
+SELECT *
+FROM ranked_products
+WHERE rn = 1;
+```
+
+Lưu ý: Nếu có nhiều sản phẩm cùng có giá cao nhất trong một danh mục, cách sử dụng `ROW_NUMBER` sẽ chỉ trả về một sản phẩm duy nhất (ngẫu nhiên) trong số đó. Nếu bạn muốn trả về tất cả các sản phẩm có giá cao nhất (nếu có nhiều sản phẩm cùng giá), bạn có thể sử dụng `RANK` hoặc `DENSE_RANK` thay vì `ROW_NUMBER`.
+
+Ví dụ sử dụng `RANK`:
+
+```sql
+WITH ranked_products AS (
+    SELECT 
+        *,
+        RANK() OVER (PARTITION BY category ORDER BY price DESC) as rnk
+    FROM products
+)
+SELECT *
+FROM ranked_products
+WHERE rnk = 1;
+```
+
+### Giải thích:
+- **PARTITION BY category**: Chia dữ liệu thành các phần (partition) theo từng danh mục.
+- **ORDER BY price DESC**: Sắp xếp các sản phẩm trong mỗi danh mục theo giá giảm dần.
+- **RANK()**: Gán thứ hạng cho các sản phẩm. Các sản phẩm có cùng giá sẽ có cùng thứ hạng, và thứ hạng tiếp theo sẽ bị bỏ qua (ví dụ: 1, 1, 3, 4,...).
+- **WHERE rnk = 1**: Chọn các sản phẩm có thứ hạng 1 (giá cao nhất) trong mỗi danh mục.
+
+### Lưu ý:
+- Đảm bảo rằng cột `price` có kiểu dữ liệu số (như `INT`, `DECIMAL`, etc.) để có thể so sánh và sắp xếp chính xác.
+- Nếu bạn muốn xử lý các trường hợp có nhiều sản phẩm cùng giá cao nhất, hãy sử dụng `RANK` hoặc `DENSE_RANK` thay vì `ROW_NUMBER`.
+
+Hy vọng điều này giúp bạn! Nếu bạn có thêm câu hỏi, đừng ngần ngại hỏi.
+2026-03-25 11:34:55,900 - services.ai_service - WARNING - Failed to extract JSON from AI content: 
+Để trả lời câu hỏi của bạn về việc tìm kiếm các sản phẩm có giá trị lớn nhất trong một danh mục cụ ...
+2026-03-25 11:34:55,900 - __main__ - INFO - Intent: {}
+2026-03-25 11:34:55,900 - __main__ - INFO - Regex Search Query: Chào bạn, tôi muốn tìm mua áo sơ mi nam công sở.
+2026-03-25 11:34:55,901 - __main__ - INFO - ⚠️ No exact match for 'Chào bạn, tôi muốn tìm mua áo sơ mi nam công sở.'. Trying split-term search...
+INFO:     127.0.0.1:56144 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:34:56,398 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:34:56,398 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:03,296 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:03,298 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 993 | Completion: 69 | TOTAL: 1062
+2026-03-25 11:35:03,298 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+  "category": "Tai nghe - Micro",
+  "product": "",
+  "keyword": "tai nghe bluetooth chống ồn",
+  "max_price": 2000000,
+  "location": "",
+  "is_location_request": false,
+  "is_general_inquiry": false
+}
+2026-03-25 11:35:03,298 - __main__ - INFO - Intent: {'category': 'Tai nghe - Micro', 'product': '', 'keyword': 'tai nghe bluetooth chống ồn', 'max_price': 2000000, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:03,299 - __main__ - INFO - Found 66 products in category 'Tai nghe - Micro'
+INFO:     127.0.0.1:56145 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:03,800 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:03,802 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:07,638 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:07,638 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 88 | TOTAL: 1087
+2026-03-25 11:35:07,638 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Pin,Sạc dự phòng , ắc quy",
+        "product": "",
+        "keyword": "sạc dự phòng 20000mAh hỗ trợ sạc nhanh",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": false,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:35:07,638 - __main__ - INFO - Intent: {'category': 'Pin,Sạc dự phòng , ắc quy', 'product': '', 'keyword': 'sạc dự phòng 20000mAh hỗ trợ sạc nhanh', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:07,642 - __main__ - INFO - Found 48 products in category 'Pin,Sạc dự phòng , ắc quy'
+INFO:     127.0.0.1:56149 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:08,179 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:08,182 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:11,800 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:11,804 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 989 | Completion: 82 | TOTAL: 1071
+2026-03-25 11:35:11,804 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Máy tính & Laptop",
+    "product": "máy tính bảng cũ",
+    "keyword": "máy tính bảng cũ cho học sinh",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:35:11,804 - __main__ - INFO - Intent: {'category': 'Máy tính & Laptop', 'product': 'máy tính bảng cũ', 'keyword': 'máy tính bảng cũ cho học sinh', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:11,806 - __main__ - INFO - Found 0 products in category 'Máy tính & Laptop'
+INFO:     127.0.0.1:56151 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:12,240 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:12,240 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:17,449 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:17,449 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 993 | Completion: 80 | TOTAL: 1073
+2026-03-25 11:35:17,449 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Mẹ và Bé",
+        "product": "sữa bột Meiji cho bé 0-1 tuổi",
+        "keyword": "sữa bột Meiji",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": false,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:35:17,449 - __main__ - INFO - Intent: {'category': 'Mẹ và Bé', 'product': 'sữa bột Meiji cho bé 0-1 tuổi', 'keyword': 'sữa bột Meiji', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:17,449 - __main__ - INFO - Found 251 products in category 'Mẹ và Bé'
+INFO:     127.0.0.1:56157 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:18,164 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:18,165 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:23,249 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:23,252 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 1006 | Completion: 69 | TOTAL: 1075
+2026-03-25 11:35:23,252 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Đồ chơi",
+    "product": "",
+    "keyword": "đồ chơi giáo dục",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:35:23,252 - __main__ - INFO - Intent: {'category': 'Đồ chơi', 'product': '', 'keyword': 'đồ chơi giáo dục', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:23,254 - __main__ - INFO - Found 114 products in category 'Đồ chơi'
+INFO:     127.0.0.1:56161 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:23,978 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:23,981 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:26,879 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:26,881 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 997 | Completion: 71 | TOTAL: 1068
+2026-03-25 11:35:26,881 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Bàn , ghế",
+        "product": "",
+        "keyword": "bàn ghế gỗ làm việc tối giản",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": false,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:35:26,881 - __main__ - INFO - Intent: {'category': 'Bàn , ghế', 'product': '', 'keyword': 'bàn ghế gỗ làm việc tối giản', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:26,881 - __main__ - INFO - Found 2 products in category 'Bàn , ghế'
+INFO:     127.0.0.1:56170 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:27,303 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:27,303 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:44,348 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:44,350 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 81 | TOTAL: 1080
+2026-03-25 11:35:44,350 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+    "category": "Vợt muỗi , đèn bắt muỗi",
+    "product": "",
+    "keyword": "vợt muỗi loại tốt",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": true,
+    "is_general_inquiry": false
+}
+```
+2026-03-25 11:35:44,351 - __main__ - INFO - Intent: {'category': 'Vợt muỗi , đèn bắt muỗi', 'product': '', 'keyword': 'vợt muỗi loại tốt', 'max_price': 0, 'location': '', 'is_location_request': True, 'is_general_inquiry': False}
+INFO:     127.0.0.1:56174 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:44,802 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:44,816 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:51,800 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:51,800 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 84 | TOTAL: 1083
+2026-03-25 11:35:51,800 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+  "category": "Thiết bị điện gia dụng",
+  "product": "nồi cơm điện Sharp hoặc Tiger",
+  "keyword": "nồi cơm điện Sharp Tiger",
+  "max_price": 0,
+  "location": "",
+  "is_location_request": true,
+  "is_general_inquiry": false
+}
+```
+2026-03-25 11:35:51,800 - __main__ - INFO - Intent: {'category': 'Thiết bị điện gia dụng', 'product': 'nồi cơm điện Sharp hoặc Tiger', 'keyword': 'nồi cơm điện Sharp Tiger', 'max_price': 0, 'location': '', 'is_location_request': True, 'is_general_inquiry': False}
+INFO:     127.0.0.1:56180 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:52,205 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:52,205 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:35:58,368 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:35:58,368 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 87 | TOTAL: 1086
+2026-03-25 11:35:58,370 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+    "category": "Pin,Sạc dự phòng , ắc quy",
+    "product": "",
+    "keyword": "sạc dự phòng 20000mAh hỗ trợ sạc nhanh",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+2026-03-25 11:35:58,370 - __main__ - INFO - Intent: {'category': 'Pin,Sạc dự phòng , ắc quy', 'product': '', 'keyword': 'sạc dự phòng 20000mAh hỗ trợ sạc nhanh', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:35:58,373 - __main__ - INFO - Found 48 products in category 'Pin,Sạc dự phòng , ắc quy'
+INFO:     127.0.0.1:56184 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:35:58,833 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:35:58,833 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:36:12,809 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:36:12,810 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 995 | Completion: 63 | TOTAL: 1058
+2026-03-25 11:36:12,811 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+  "category": "Quần áo",
+  "product": "",
+  "keyword": "áo sơ mi nam công sở",
+  "max_price": 0,
+  "location": "",
+  "is_location_request": false,
+  "is_general_inquiry": false
+}
+2026-03-25 11:36:12,811 - __main__ - INFO - Intent: {'category': 'Quần áo', 'product': '', 'keyword': 'áo sơ mi nam công sở', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:36:12,814 - __main__ - INFO - Found 340 products in category 'Quần áo'
+INFO:     127.0.0.1:56187 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:36:13,463 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:36:13,463 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:36:18,963 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:36:18,963 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 1004 | Completion: 78 | TOTAL: 1082
+2026-03-25 11:36:18,963 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+    "category": "Đồ Camping , phượt , cắm trại",
+    "product": "",
+    "keyword": "balo du lịch 40L chống nước",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+2026-03-25 11:36:18,963 - __main__ - INFO - Intent: {'category': 'Đồ Camping , phượt , cắm trại', 'product': '', 'keyword': 'balo du lịch 40L chống nước', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:36:18,963 - __main__ - INFO - Found 9 products in category 'Đồ Camping , phượt , cắm trại'
+INFO:     127.0.0.1:56193 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:36:19,400 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:36:19,400 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:36:24,179 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:36:24,187 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 993 | Completion: 79 | TOTAL: 1072
+2026-03-25 11:36:24,187 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+    "category": "Mẹ và Bé",
+    "product": "sữa bột Meiji cho bé 0-1 tuổi",
+    "keyword": "sữa bột Meiji",
+    "max_price": 0,
+    "location": "",
+    "is_location_request": false,
+    "is_general_inquiry": false
+}
+2026-03-25 11:36:24,187 - __main__ - INFO - Intent: {'category': 'Mẹ và Bé', 'product': 'sữa bột Meiji cho bé 0-1 tuổi', 'keyword': 'sữa bột Meiji', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:36:24,188 - __main__ - INFO - Found 251 products in category 'Mẹ và Bé'
+INFO:     127.0.0.1:56197 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:36:24,970 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:36:24,970 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:36:34,589 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:36:34,589 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 993 | Completion: 81 | TOTAL: 1074
+2026-03-25 11:36:34,589 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: 
+```json
+{
+  "category": "Tai nghe - Micro",
+  "product": "",
+  "keyword": "tai nghe bluetooth chống ồn tầm giá 2 triệu",
+  "max_price": 2000000,
+  "location": "",
+  "is_location_request": false,
+  "is_general_inquiry": false
+}
+```
+2026-03-25 11:36:34,589 - __main__ - INFO - Intent: {'category': 'Tai nghe - Micro', 'product': '', 'keyword': 'tai nghe bluetooth chống ồn tầm giá 2 triệu', 'max_price': 2000000, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:36:34,592 - __main__ - INFO - Found 66 products in category 'Tai nghe - Micro'
+INFO:     127.0.0.1:56203 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:36:35,078 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:36:35,078 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:36:39,237 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:36:39,238 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 999 | Completion: 78 | TOTAL: 1077
+2026-03-25 11:36:39,238 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: {
+        "category": "Vợt muỗi , đèn bắt muỗi",
+        "product": "",
+        "keyword": "vợt muỗi loại tốt",
+        "max_price": 0,
+        "location": "",
+        "is_location_request": true,
+        "is_general_inquiry": false
+    }
+2026-03-25 11:36:39,238 - __main__ - INFO - Intent: {'category': 'Vợt muỗi , đèn bắt muỗi', 'product': '', 'keyword': 'vợt muỗi loại tốt', 'max_price': 0, 'location': '', 'is_location_request': True, 'is_general_inquiry': False}
+INFO:     127.0.0.1:56208 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:36:39,737 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:36:39,738 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
+2026-03-25 11:36:51,507 - httpx - INFO - HTTP Request: POST https://integrate.api.nvidia.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-25 11:36:51,507 - services.ai_service - INFO - 📊 [AI-QUOTA-CHECK] Model: deepseek-ai/deepseek-v3.1 | Prompt: 989 | Completion: 73 | TOTAL: 1062
+2026-03-25 11:36:51,507 - services.ai_service - INFO - 🔍 [AI-INTENT-RAW]: ```json
+{
+  "category": "Máy tính & Laptop",
+  "product": "",
+  "keyword": "máy tính bảng cũ cho học sinh",
+  "max_price": 0,
+  "location": "",
+  "is_location_request": false,
+  "is_general_inquiry": false
+}
+```
+2026-03-25 11:36:51,507 - __main__ - INFO - Intent: {'category': 'Máy tính & Laptop', 'product': '', 'keyword': 'máy tính bảng cũ cho học sinh', 'max_price': 0, 'location': '', 'is_location_request': False, 'is_general_inquiry': False}
+2026-03-25 11:36:51,507 - __main__ - INFO - Found 0 products in category 'Máy tính & Laptop'
+INFO:     127.0.0.1:56213 - "POST /chat HTTP/1.1" 200 OK
+2026-03-25 11:36:54,970 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 404 Not Found"
+2026-03-25 11:36:54,971 - services.ai_service - WARNING - ⚠️ Provider Gemini (Key: AIzaSyCX...) failed: Error code: 404 - [{'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1main, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}]
